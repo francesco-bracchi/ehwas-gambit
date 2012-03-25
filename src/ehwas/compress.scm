@@ -1,0 +1,68 @@
+(##namespace ("ehwas-compress#"))
+
+(##include "~~/lib/gambit#.scm")
+
+(include "request#.scm")
+(include "response#.scm")
+(include "combinators#.scm")
+;;(include "../encode/zlib#.scm")
+
+(include "../encode/gzip-port#.scm")
+
+(declare (standard-bindings)
+         (extended-bindings)
+         (block)
+	 (fixnum)
+         ;; (not safe)
+         )
+
+(define (split s #!optional (sep #\,))
+  (let split ((i 0) (j 0))
+    (cond
+     ((= j (string-length s))
+      (if (= i j) '()
+          (list (substring s i j))))
+     
+     ((char=? (string-ref s j) sep)
+      (cons (substring s i j)
+            (split (+ j 1) (+ j 1))))
+
+     (else
+      (split i (+ j 1))))))
+
+(define (compress resolver)
+  (lambda (req)
+    (let(
+         (res (resolver req)))
+      (if (not (response? res)) #f
+          (let*(
+                (accepted (let(
+			       (aenc (assq 'Accept-Encoding (request-header req))))
+			    (if aenc (split (cdr aenc)) '())))
+                (code (response-code res))
+                (status (response-status res))
+                (headers (response-header res)))
+            (if (member "gzip" accepted)
+		(make-response code status
+			       (cons '(Content-encoding . "gzip") headers)
+			       (lambda ()
+				 (with-gzip-port 
+				  (current-output-port)
+				  (lambda (pzip)
+				    (parameterize 
+				     ((current-output-port pzip))
+				     ((response-writer res))
+				     (force-output))))))
+		res))))))
+
+(define (can-compress req)
+  (let(
+       (accepted (let(
+		      (aenc (assq 'Accept-Encoding (request-header req))))
+		   (if aenc (split (cdr aenc)) '()))))
+    (member "gzip" accepted)))
+
+(define (cached-compress res)
+  (orelse
+   (allow can-compress (cache (compress res)))
+   (cache res)))

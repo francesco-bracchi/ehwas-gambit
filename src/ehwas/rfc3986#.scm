@@ -1,0 +1,20 @@
+(##namespace
+ ("rfc3986#"
+  make-uri
+  uri?
+  uri-scheme
+  uri-authority
+  uri-path
+  uri-query
+  uri-fragment
+  rfc3986
+  path
+  escape
+  unescape
+  pct-decode
+  pct-encode
+  
+  read-uri
+  write-uri
+  uri
+  ))
