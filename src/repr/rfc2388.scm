@@ -1,9 +1,9 @@
 (namespace ("ehwas-rfc2388#"))
 
 (##include "~~/lib/gambit#.scm")
-(include "../../ansuz/char-stream-parser#.scm")
-(include "../../ansuz/re#.scm")
-(include "../../ansuz/sources/string#.scm")
+(include "~~ansuz/char-stream-parser#.scm")
+(include "~~ansuz/re#.scm")
+(include "~~ansuz/sources/string#.scm")
 
 (include "../utils#.scm")
 (include "../http-message#.scm")
@@ -13,6 +13,7 @@
 (declare (standard-bindings)
          (extended-bindings)
          (block)
+	 (not inline)
          ;; (not safe)
 	 (fixnum)
          )
@@ -31,7 +32,7 @@
   (maybe (get #\"))
   (return (cons (string->symbol name) value)))
 
-(include "../../ansuz/sources/port#.scm")
+(include "../~~ansuz/sources/port#.scm")
 
 
 (define (stream-starts? stream boundary)

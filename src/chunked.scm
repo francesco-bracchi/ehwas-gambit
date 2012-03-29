@@ -40,8 +40,7 @@
 	     (reader header server encode))))
 
 (define (chunked-write what writer header port encode)
-  (let(
-       (buffer (make-u8vector (chunk-size)))
+  (let((buffer (make-u8vector (chunk-size))))
     (receive (client server) (open-u8vector-pipe)
 	     (thread-start! (make-thread (lambda () (writer what header client encode))))
 	     (let produce ()
@@ -52,7 +51,7 @@
 		     (begin
 		       (newline port)
 		       (write-subu8vector buffer 0 len port)
-		       (produce)))))))))
+		       (produce))))))))
 
 (current-http-reader 
  (let*(
@@ -67,8 +66,7 @@
 	 (normal-reader header port encode)))))
 
 (current-http-writer
- (let*(
-       (normal-writer (current-http-writer))
+ (let*((normal-writer (current-http-writer))
        (chunked-writer (with-chunked-writer normal-writer)))
    (lambda (what
 	    #!optional 

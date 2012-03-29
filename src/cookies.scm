@@ -7,14 +7,16 @@
 (include "http-request#.scm")
 (include "http-response#.scm")
 
-(include "../ansuz/sources/string#.scm")
-(include "../ansuz/re#.scm")
+(include "~~ansuz/sources/string#.scm")
+(include "~~ansuz/re#.scm")
 
-(include "../ansuz/char-stream-parser#.scm")
+(include "~~ansuz/char-stream-parser#.scm")
 
 (declare (standard-bindings)
          (extended-bindings)
          (block)
+	 (not inline)
+	 (not safe)
          ;;(not safe)
          )
 

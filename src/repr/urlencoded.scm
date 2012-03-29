@@ -1,9 +1,9 @@
 (##namespace ("ehwas-urlencoded#"))
 
 (##include "~~/lib/gambit#.scm")
-(include "../../ansuz/char-stream-parser#.scm")
-(include "../../ansuz/re#.scm")
-(include "../../ansuz/sources/port#.scm")
+(include "~~ansuz/char-stream-parser#.scm")
+(include "~~ansuz/re#.scm")
+(include "~~ansuz/sources/port#.scm")
 
 (include "../http-message#.scm")
 (include "../rfc3986#.scm")

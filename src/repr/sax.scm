@@ -3,14 +3,15 @@
 (##namespace ("ehwas-sax#"))
 
 (##include "~~/lib/gambit#.scm")
-(include "../../ansuz/sources/port#.scm")
-(include "../../ansuz/char-stream-parser#.scm")
+(include "~~ansuz/sources/port#.scm")
+(include "~~ansuz/char-stream-parser#.scm")
 
-(include "../../ansuz/re#.scm")
+(include "~~ansuz/re#.scm")
 
 (declare (standard-bindings)
          (extended-bindings)
          (block)
+	 (not inline)
          ;; (not safe)
          (fixnum))
 
@@ -23,9 +24,9 @@
   (return (string->symbol r)))
 
 (define-parser (xml-entity state handler)
-  (char #\&)
+  #\&
   (<- name (xml-name))
-  (char #\;)
+  #\;
   (return (handler state name #f)))
 
 (define-parser (xml-char-entity state handler)

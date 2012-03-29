@@ -3,9 +3,9 @@
 
 (##include "~~/lib/gambit#.scm")
 
-(include "../ansuz/sources/string#.scm")
-(include "../ansuz/char-stream-parser#.scm")
-(include "../ansuz/re#.scm")
+(include "~~ansuz/sources/string#.scm")
+(include "~~ansuz/char-stream-parser#.scm")
+(include "~~ansuz/re#.scm")
 
 (include "utils#.scm")
 

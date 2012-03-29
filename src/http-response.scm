@@ -12,9 +12,9 @@
 (##namespace ("ehwas-response#"))
 (##include "~~/lib/gambit#.scm")
 
-(include "../ansuz/sources/port#.scm")
-(include "../ansuz/char-stream-parser#.scm")
-(include "../ansuz/re#.scm")
+(include "~~ansuz/sources/port#.scm")
+(include "~~ansuz/char-stream-parser#.scm")
+(include "~~ansuz/re#.scm")
 
 (include "utils#.scm")
 (include "rfc822#.scm")
@@ -24,6 +24,7 @@
 
 (declare (standard-bindings)
          (extended-bindings)
+	 (not inline)
          ;; (not safe)
 	 (fixnum)
          (block))

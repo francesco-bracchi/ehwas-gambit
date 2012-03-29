@@ -1,9 +1,9 @@
 (##namespace ("ehwas-html#"))
 
 (##include "~~/lib/gambit#.scm")
-(include "../../ansuz/sources/port#.scm")
-(include "../../ansuz/char-stream-parser#.scm")
-(include "../../ansuz/re#.scm")
+(include "~~ansuz/sources/port#.scm")
+(include "~~ansuz/char-stream-parser#.scm")
+(include "~~ansuz/re#.scm")
 
 (include "../http-message#.scm")
 (include "sax#.scm")

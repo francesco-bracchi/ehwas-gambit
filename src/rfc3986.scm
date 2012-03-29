@@ -3,14 +3,15 @@
 (##namespace ("rfc3986#"))
 
 (##include "~~/lib/gambit#.scm")
-(include "../ansuz/sources/port#.scm")
-(include "../ansuz/char-stream-parser#.scm")
+(include "~~ansuz/sources/port#.scm")
+(include "~~ansuz/char-stream-parser#.scm")
 
-(include "../ansuz/re#.scm")
+(include "~~ansuz/re#.scm")
 
 (declare (standard-bindings)
          (extended-bindings)
          (block)
+	 (not inline)
          ;; (not safe)
          (fixnum))
 

@@ -1,0 +1,151 @@
+(##namespace ("ehwas-websocket#"))
+
+(##include "~~/lib/gambit#.scm")
+(include "request#.scm")
+(include "response#.scm")
+(include "~~/lib/digest#.scm")
+
+(##include "~~/lib/gambit#.scm")
+
+(declare
+ (standard-bindings)
+ (extended-bindings)
+ (fixnum)
+ (not safe)
+ (block))
+
+(define (read-frame #!optional (port (current-input-port)))
+  (let(
+       (i0 (read-u8 port)))
+    (if (= i0 #x00)
+        (let read ((buffer (make-u8vector 64)) (pos 0))
+          (let(
+               (c (read-u8 port)))
+            (if (= c #xff) (subu8vector buffer 0 pos)
+                (let(
+                     (buffer (if (>= pos (u8vector-length buffer)) (u8vector-append buffer (make-u8vector (u8vector-length buffer))) buffer)))
+                  (u8vector-set! buffer pos c)
+                  (read buffer (+ pos 1))))))
+        (error "wrong frame protocol"))))
+
+(define (write-frame frame #!optional (port (current-output-port)))
+  (pp frame)
+  (write-u8 #x00 port)
+  (write-subu8vector frame 0 (u8vector-length frame) port)
+  (write-u8 #xff port))
+
+
+(define (read-k3 #!optional (port (current-input-port)))
+  (let(
+       (buffer (make-u8vector 8))
+       (i0 (read-u8 port)))
+    (if (= i0 #xa)
+        (begin
+          (read-subu8vector buffer 0 8 port)
+          buffer))))
+          
+(define websocket-reader (make-parameter (lambda (p) (read-line p #f))))
+(define websocket-writer (make-parameter (lambda  (d p) (display d p))))
+
+(define (websocket-read #!optional (port (current-input-port)))
+  (let(
+       (frame (read-frame port))
+       (reader (websocket-reader)))
+    (if reader (call-with-input-u8vector frame reader)frame)))
+  ;;(if reader (reader frame) frame)))
+
+(define (websocket-write data #!optional (port (current-output-port)))
+  (let(
+       (writer (websocket-writer)))
+    (write-frame
+     (if writer
+         (call-with-output-u8vector (u8vector) (lambda (p) (writer data p)))
+         data)
+     port)))
+
+(define (key->number k)
+  (let numbers ((j 0) (mun '()) (spaces 0))
+    (if (>= j (string-length k)) (quotient (string->number (list->string (reverse mun))) spaces)
+        (let(
+             (c (string-ref k j)))
+          (cond
+           ((char=? c #\space) (numbers (+ j 1) mun (+ spaces 1)))
+           ((char-numeric? c) (numbers (+ j 1) (cons c mun) spaces))
+           (else (numbers (+ j 1) mun spaces)))))))
+
+(define (string-split s x)
+  (let split ((j 0) (k 0) (rs '()))
+    (if (>= k (string-length s))
+        (reverse (cons (substring s j k) rs))
+        (let(
+             (c (string-ref s k)))
+          (if (char=? c x)
+              (split (+ k 1) (+ k 1) (cons (substring s j k) rs))
+              (split j (+ k 1) rs))))))
+
+(define (path->string ps)
+  (let path->string ((ps ps))
+    (if (null? ps) ""
+        (string-append "/" (car ps) (path->string (cdr ps))))))
+;;   (apply string-append (map (lambda (p) (string-append "/" p)) ps)))
+
+(define (solve-challange k1 k2 k3)
+  (let(
+       (data (make-string 16)))
+    (string-set! data 0 (integer->char (extract-bit-field 32 24 k1)))
+    (string-set! data 1 (integer->char (extract-bit-field 24 16 k1)))
+    (string-set! data 2 (integer->char (extract-bit-field 16  8 k1)))
+    (string-set! data 3 (integer->char (extract-bit-field  8  0 k1)))
+    
+    (string-set! data 4 (integer->char (extract-bit-field 32 24 k2)))
+    (string-set! data 5 (integer->char (extract-bit-field 24 16 k2)))
+    (string-set! data 6 (integer->char (extract-bit-field 16  8 k2)))
+    (string-set! data 7 (integer->char (extract-bit-field  8  0 k2)))
+
+    (let put-k3 ((p 0))
+      (if (< p 8)
+          (begin
+            (string-set! data (+ p 8) (integer->char (u8vector-ref k3 p)))
+            (put-k3 (+ p 1)))))
+    
+    (digest-string data 'md5 'u8vector)))
+    
+
+;; TODO guarda bene il protocol
+(define (websocket handler #!key (secure #f) (protocol-inventory '()))
+  (lambda (req)
+    (let(
+         (headr (request-header req)))
+      (and (eq? (request-method req) 'GET)
+	   (assq headr 'Host)
+	   (assq headr 'Origin)
+	   (assq headr 'Sec-WebSocket-Key1)
+	   (assq headr 'Sec-WebSocket-Key2)
+	   (let(
+		(con (assq headr 'Connection)))
+	     (if con (equal? (cdr con) "Upgrade")))
+	   (let(
+		(ugr (assq headr 'Upgrade)))
+	     (if ugr (equal? (cdr ugr) "WebSocket")))
+           (let*(
+                 (k1 (key->number (assq 'Sec-WebSocket-Key1 headr)))
+                 (k2 (key->number (assq'Sec-WebSocket-Key2 headr)))
+                 (k3 (read-k3))
+                 (challange (solve-challange k1 k2 k3)))
+             (response
+	      101 "WebSocket Protocol Handshake"
+              (header
+               Upgrade: "WebSocket"
+               Connection: "Upgrade"
+               Sec-WebSocket-Origin: (assq headr 'Origin)
+               Sec-WebSocket-Location: (string-append (if secure "wss" "ws") "://" (assq 'Host headr) (path->string (request-path req)))
+               Sec-WebSocket-Protocol: "gebo")
+              (lambda (p)
+                (write-subu8vector challange 0 16 p)
+                (parameterize
+                    ((current-input-port p)
+                     (current-output-port p))
+                  (handler req)))))))))
+
+;; (websocket-protocol-set! "base64" base64-read base64-write)
+;; (websocket-protocol-set! "json" json-read json-write)

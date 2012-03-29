@@ -1,7 +1,7 @@
 (##namespace ("ehwas-base64-inline#"
 	      base64-inline))
 
-(include "../encode/base64#.scm")
+(include "base64-inline#.scm")
 (include "mime-types#.scm")
 
 (define (base64-inline fn)

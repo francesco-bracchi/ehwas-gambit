@@ -1,9 +1,9 @@
 (##namespace ("ehwas-json#"))
 (##include "~~/lib/gambit#.scm")
 
-(include "../../ansuz/sources/port#.scm")
-(include "../../ansuz/char-stream-parser#.scm")
-(include "../../ansuz/re#.scm")
+(include "~~ansuz/sources/port#.scm")
+(include "~~ansuz/char-stream-parser#.scm")
+(include "~~ansuz/re#.scm")
 
 (include "../utils#.scm")
 (include "../http-message#.scm")
@@ -11,6 +11,7 @@
 (declare (standard-bindings)
          (extended-bindings)
          (block)
+	 (not inline)
          ;; (not safe)
          (fixnum))
 

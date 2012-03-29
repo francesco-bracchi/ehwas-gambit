@@ -7,11 +7,9 @@
 (include "http-request#.scm")
 (include "http-response#.scm")
 (include "repr/template#.scm")
-(include "../encode/openssl-ports#.scm")
 
 (declare (standard-bindings)
          (extended-bindings)
-         ;;(not safe)
          (block))
 
 (define current-http-port (make-parameter #f))
@@ -109,28 +107,17 @@
 			(write-http-response response-404)))))
 	       (write-http-response response-400))))))))
 
-(define (with-clear handler)
+(define (with-tcp-port handler)
   (lambda ()
     (parameterize
      ((current-http-port (current-input-port)))
      (handler))))
 
-(define (with-ssl handler)
-  (lambda ()
-    (let(
-         (port (port->ssl-server-port (current-input-port) (list (char-encoding:'ascii)))))
-      (parameterize
-       ((current-http-port (current-input-port))
-	(current-input-port port)
-	(current-output-port port))
-       (handler)))))
-
 (define (http-service-register! 
 	 handler 
 	 #!key
 	 (server-address "*")
-	 (secure #f) 
-	 (port-number (if secure 443 80)) 
+	 (port-number 80)
 	 (backlog 128) 
 	 (reuse-address #t))
 
@@ -143,6 +130,4 @@
          char-encoding: 'ASCII
          eol-encoding: 'cr-lf
          buffering: #f)
-   (if secure
-       (with-ssl (http-service handler))
-       (with-clear (http-service handler)))))
+   (with-tcp-port (http-service handler))))

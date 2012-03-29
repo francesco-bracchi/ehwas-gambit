@@ -19,8 +19,8 @@
 (include "repr/urlencoded#.scm")
 (include "http-request#.scm")
 
-(include "../ansuz/char-stream-parser#.scm")
-(include "../ansuz/sources/port#.scm")
+(include "~~ansuz/char-stream-parser#.scm")
+(include "~~ansuz/sources/port#.scm")
 
 (declare (standard-bindings)
          (extended-bindings)
