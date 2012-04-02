@@ -17,7 +17,7 @@
          (block)
 	 (not inline)
 	 (not safe)
-         ;;(not safe)
+	 (fixnum)
          )
 
 (define-regexp spaces " *")

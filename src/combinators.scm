@@ -131,16 +131,16 @@
     (if (test? request) #f (handler request))))
 
 (define (get? request)
-  (eq? (request-method request) 'GET))
+  (eq? (http-request-method request) 'GET))
 
 (define (post? request)
-  (eq? (request-method request) 'POST))
+  (eq? (http-request-method request) 'POST))
 
 (define (head? request)
-  (eq? (request-method request) 'HEAD))
+  (eq? (http-request-method request) 'HEAD))
 
 (define (options? request)
-  (eq? (request-method request) 'OPTIONS))
+  (eq? (http-request-method request) 'OPTIONS))
 
 (define (implode es)
   (if (null? es) ""

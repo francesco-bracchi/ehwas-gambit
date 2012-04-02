@@ -3,41 +3,45 @@
 (##namespace ("ehwas-sax#"))
 
 (##include "~~/lib/gambit#.scm")
-(include "~~ansuz/sources/port#.scm")
-(include "~~ansuz/char-stream-parser#.scm")
-
+(include "~~ansuz/on-ports#.scm")
 (include "~~ansuz/re#.scm")
 
 (declare (standard-bindings)
          (extended-bindings)
          (block)
 	 (not inline)
-         ;; (not safe)
+         (not safe)
          (fixnum))
 
 (define-regexp xml-space "[\x20\x9\xD\xA]+")
 
 (define-regexp maybe-xml-space "[\x20\x9\xD\xA]*")
 
+(define-regexp xml-name-string "[:_a-zA-Z\xC8-\x10000][:_a-zA-Z0-9\xC8-\\.\\-\\xB7\x10000]*")
+
 (define-parser (xml-name)
-  (<- r (regexp "[:_a-zA-Z\xC8-\x10000][:_a-zA-Z0-9\xC8-\\.\\-\\xB7\x10000]*"))
+  (<- r (xml-name-string))
   (return (string->symbol r)))
 
 (define-parser (xml-entity state handler)
-  #\&
+  (get #\&)
   (<- name (xml-name))
-  #\;
+  (get #\;)
   (return (handler state name #f)))
 
+(define-regexp xml-char-entity-decimal "[0-9]+")
+
+(define-regexp xml-char-entity-hex "[0-9A-Fa-f]+")
+
 (define-parser (xml-char-entity state handler)
-  (regexp "&#")
+  #\& #\#
   (<- code 
-      (<> (>> (<- s (regexp "[0-9]+"))
-	      (get #\;)
+      (<> (>> (<- s (xml-char-entity-decimal))
+	      #\;
 	      (return (string->number s)))
 	  (>> (get #\x)
-	      (<- s (regexp "[0-9A-Fa-f]+"))
-	      (get #\;)
+	      (<- s (xml-char-entity-hex))
+	      #\;
 	      (return (string->number s 16)))))
   (return 
    (handler 
@@ -70,55 +74,74 @@
 		       (string-set! b p c)
 		       (loop (stream-cdr ts) b (+ p 1) bs)))))))))
 
+(define-regexp cdata-open "<!\\[CDATA\\[")
+
+(define-regexp cdata-text "([~\\]]|\\][~\\]]|\\]\\][~>])*")
+
+(define-regexp cdata-close "\\]\\]>")
+
 (define-parser (xml-cdata state handler)
-  (regexp "<!\\[CDATA\\[")
-  (<- text (regexp "([~\\]]|\\][~\\]]|\\]\\][~>])*"))
-  (regexp "\\]\\]>")
+  (cdata-open)
+  (<- text (cdata-text))
+  (cdata-close)
   (return (handler state '*CDATA* text)))
 
+(define-regexp xml-comment-text "([~\\-]|\\-[~\\-])*")
+
 (define-parser (xml-comment state handler)
-  (regexp "<!\\-\\-")
-  (<- text (regexp "([~\\-]|\\-[~\\-])*"))
-  (regexp "\\-\\->")
+  #\< #\! #\- #\-
+  (<- text (xml-comment-text))
+  #\- #\- #\>
   (return (handler state '*COMMENT* text)))
 
+(define-regexp xml-pi-text "([~\\?]|\\?[~>])*")
 (define-parser (xml-pi state handler)
-  (regexp "<\\?")
+  #\< #\?
   (<- name (xml-name))
   (xml-space)
-  (<- text (regexp "([~\\?]|\\?[~>])*"))
-  (regexp "\\?>")
+  (<- text (xml-pi-text))
+  #\? #\>
   (return (handler state name text)))
 
-  ;; BUG in expression (regexp "([~\n]|\\\\\")*")
+;; BUG in expression (regexp "([~\n]|\\\\\")*")
+;; check if fixed
+
+(define-regexp xml-attribute-text "([~\n]|\\\\\")*")
+
 (define-parser (xml-attribute-value)
-  (reflect (ts sc fl)
-	   (let((data (make-string 1024))
-		(c (stream-car ts)))
-	     (if (eq? c #\")
-		 (let loop ((ts (stream-cdr ts)) (j 0))
-		   (let((c (stream-car ts)))
-		     (cond
-		      ((eq? c #\")
-		       (sc (substring data 0 j) (stream-cdr ts) fl))
-		      ((eq? c #\\)
-		       (let*((ts (stream-cdr ts))
-			     (c (stream-car ts)))
-			 (if (eof-object? c) (fl 'eof ts sc)
-			     (begin
-			       (string-set! data j c)
-			       (loop (stream-cdr ts) (+ j 1))))))
-		      ((char? c)
-		       (string-set! data j c)
-		       (loop (stream-cdr ts) (+ j 1)))
-		      (else
-		       (fl 'eof ts sc)))))
-		 (fl 'dc ts sc)))))
+  #\"
+  (<- text (xml-attribute-text))
+  #\"
+  (return text))
+
+;; (define-parser (xml-attribute-value)
+;;   (reflect (ts sc fl)
+;; 	   (let((data (make-string 1024))
+;; 		(c (stream-car ts)))
+;; 	     (if (eq? c #\")
+;; 		 (let loop ((ts (stream-cdr ts)) (j 0))
+;; 		   (let((c (stream-car ts)))
+;; 		     (cond
+;; 		      ((eq? c #\")
+;; 		       (sc (substring data 0 j) (stream-cdr ts) fl))
+;; 		      ((eq? c #\\)
+;; 		       (let*((ts (stream-cdr ts))
+;; 			     (c (stream-car ts)))
+;; 			 (if (eof-object? c) (fl 'eof ts sc)
+;; 			     (begin
+;; 			       (string-set! data j c)
+;; 			       (loop (stream-cdr ts) (+ j 1))))))
+;; 		      ((char? c)
+;; 		       (string-set! data j c)
+;; 		       (loop (stream-cdr ts) (+ j 1)))
+;; 		      (else
+;; 		       (fl 'eof ts sc)))))
+;; 		 (fl 'dc ts sc)))))
 
 (define-parser (xml-attribute)
   (<- name (xml-name))
   (maybe-xml-space)
-  (get #\=)
+  #\=
   (maybe-xml-space)
   (<- val (xml-attribute-value))
   (return (cons name val)))
@@ -127,20 +150,20 @@
   (kleene (>> (xml-space) (xml-attribute))))
 
 (define-parser (xml-open state open close)
-  (get #\<)
+  #\<
   (<- name (xml-name))
   (<- as (xml-attributes))
   (maybe-xml-space)
-  (<> (>> (word "/>")
-            (return (close (open state name as) name '())))
-      (>> (word ">")
+  (<> (>> #\/ #\>
+	  (return (close (open state name as) name '())))
+      (>> #\>
 	  (return (open state name as)))))
 
 (define-parser (xml-close state handler)
-  (word "</")
+  #\<
   (<- name (xml-name))
   (maybe-xml-space)
-  (get #\>)
+  #\>
   (return (handler state name '())))
 
 (define-parser (sax-element state on-open on-close on-text on-pi on-comment on-entity)

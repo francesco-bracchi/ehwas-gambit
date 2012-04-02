@@ -134,7 +134,7 @@
 
 (define (write-json object header port)
   (cond
-   ((u8vector? object) (write-subu8bector object 0 (u8vector-length object) port))
+   ((u8vector? object) (write-subu8vector object 0 (u8vector-length object) port))
    ((procedure? object) (object port))
    (else (write-json-generic object port))))
 

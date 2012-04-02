@@ -2,8 +2,8 @@
 (##namespace ("ehwas-chunked#"))
 
 (##include "~~/lib/gambit#.scm")
-(include "utils#.scm")
-(include "http-message#.scm")
+(include "../utils#.scm")
+(include "../http-message#.scm")
 
 (define chunk-size (make-parameter 4096))
 
@@ -47,7 +47,7 @@
 	       (let(
 		    (len (read-subu8vector buffer 0 (chunk-size) server)))
 		 (display (number->string len 16) port)
-		 (if (> n 0)
+		 (if (> len 0)
 		     (begin
 		       (newline port)
 		       (write-subu8vector buffer 0 len port)
@@ -76,3 +76,4 @@
      (if (equal? (assh header 'content-encoding) "chunked")
 	 (chunked-writer what header port encode)
 	 (normal-writer what header port encode)))))
+

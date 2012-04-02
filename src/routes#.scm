@@ -36,7 +36,66 @@
               define-handler
               ))
 
-(include "../utils/match#.scm")
+(define-macro (ehwas-routes#match value . patterns)
+  (define (quoted? x)
+    (and (pair? x) (eq? (car x) 'quote)))
+
+  (define (const? x)
+    (or (quoted? x)
+	(number? x)
+	(char? x)))
+
+  (define (match-pair value pattern action fail)
+    (let((v (gensym 'value))
+	 (a (gensym 'car))
+	 (d (gensym 'cdr))
+	 (f (gensym 'fail)))
+      `(let((,v ,value))
+	 (if (pair? ,v)
+	     (let((,a (car ,v))
+		  (,d (cdr ,v))
+		  (,f (lambda () ,fail)))
+	       ,(match-pattern a 
+			       (car pattern) 
+			       (match-pattern d (cdr pattern) action `(,f))
+			       `(,f)))))))
+
+  (define (match-vector value pattern action fail)
+    (let((v (gensym 'value))
+	 (f (gensym 'fail)))
+      `(let((,v ,value)
+	    (,f (lambda () ,fail)))
+	 (if (and (vector? ,v) (= (vector-length ,v) ,(vector-length pattern)))
+	     ,(let matcher ((as (list->vector pattern)) (j 0))
+		(if (null? as) `(,f)
+		    (match-pattern `(vector-ref ,v ,j) 
+				   (car as) 
+				   (matcher (cdr as) (+ j 1))
+				   `(,f))))))))))
+
+(define (match-pattern value pattern action fail)
+  (cond
+   ((null? pattern)`(if (null? ,value) ,action ,fail))
+   ((eq? pattern '_) action)
+   ((const? pattern) `(if (eq? ,value ,pattern) ,action ,fail))
+   ((symbol? pattern) `(let((,pattern ,value)) ,action))
+   ((pair? pattern) (match-pair value pattern action fail))
+   ((vector? pattern) (match-vector valeu pattern action fail))
+   (else (error "pattern matching failed at " ,pattern))))
+
+  (cond
+   ((null? patterns) 
+    `(error "cannot match"))
+   ((eq? (caar patterns) 'else)
+    `(begin ,@(cdar patterns)))
+   (else 
+    (let((pattern (caar patterns))
+         (action `(begin ,@(cdar patterns)))
+         (v (gensym 'value)))
+      `(let((,v ,value))
+         ,(match-pattern v pattern action
+                         `(ehwas-routes#match ,v ,@(cdr patterns))))))))
+
 
 (define-macro (handler-case r . patterns)
   (let((m (gensym 'method))
@@ -45,7 +104,7 @@
     `(let*((,m (http-request-method ,r))
            (,u (http-request-uri ,r))
            (,p (uri-path ,u)))
-       (match (cons m p) ,patterns))))
+       (ehwas-routes#match (cons m p) ,patterns))))
               
 (define-macro (define-handler head . patterns)
   (let((request-name (cadr head)))

@@ -1,8 +1,7 @@
 (##namespace ("ehwas-html#"))
 
 (##include "~~/lib/gambit#.scm")
-(include "~~ansuz/sources/port#.scm")
-(include "~~ansuz/char-stream-parser#.scm")
+(include "~~ansuz/on-ports#.scm")
 (include "~~ansuz/re#.scm")
 
 (include "../http-message#.scm")
@@ -19,6 +18,8 @@
 ;; reverse order  (we mantain the name as the first element
 ;; when an element closes
 ;; put it in second position in the current preceding element
+
+(define *html-empty-types* `(area base basefont br col frame hr img input isindex link meta param))
 
 (define (push elem stack)
   (cons (cons (caar stack) (cons elem (cdar stack)))
@@ -44,7 +45,6 @@
    (else
     (push (list '& name) stack))))
 
-(define *html-empty-types* `(area base basefont br col frame hr img input isindex link meta param))
 
 (define (html-open stack name attributes)
   (let(
@@ -95,7 +95,7 @@
 (define (write-html-expr html port cdata-elements #!optional (cdata #f))
   (cond
    ((string? html) (write-html-string html port cdata))
-   ((not (pair? html)) (print port: port (decode html)))
+   ((not (pair? html)) (print port: port html))
    ((eq? (car html) 'unquote) (print port: port (cadr html)))
    ((eq? (car html) '=) (print port: port (cadr html)))
    ((eq? (car html) '?) (write-html-pi html port))
@@ -175,7 +175,7 @@
 (define (write-html html header port)
   (cond
    ((u8vector? html) (write-subu8vector html 0 (u8vector-length html) port))
-   ((string? html)  (display body port))
+   ((string? html)  (display html port))
    ((procedure? html) (html port))
    ((not html) 'OK)
    (else

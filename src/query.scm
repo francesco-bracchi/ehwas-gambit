@@ -25,7 +25,8 @@
 (declare (standard-bindings)
          (extended-bindings)
          (block)
-         ;; (not safe)
+         (not safe)
+	 (not inline)
          (fixnum))
 
 (define (really-parse-query str)

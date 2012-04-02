@@ -2,14 +2,12 @@
 
 (##include "~~/lib/gambit#.scm")
 
-(include "../ansuz/char-stream-parser#.scm")
-(include "../ansuz/re#.scm")
-(include "../ansuz/sources/string#.scm")
+(include "~~ansuz/on-strings#.scm")
+(include "~~ansuz/re#.scm")
 
 (declare (standard-bindings)
          (extended-bindings)
          (block)
-         ;; (not safe)
          (fixnum))
 
 (define (identity x) x)

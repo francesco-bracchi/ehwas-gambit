@@ -1,9 +1,14 @@
 (##namespace ("ehwas-http-client#"))
 
 (##include "~~/lib/gambit#.scm")
-(include "~~ansuz/char-stream-parser#.scm")
-(include "~~ansuz/sources/port#.scm")
+
+(include "~~ansuz/on-strings#.scm")
+
 (include "rfc3986#.scm")
+(include "utils#.scm")
+(include "http-message#.scm")
+(include "http-request#.scm")
+(include "http-response#.scm")
 
 (define (string->uri str)
   (call-with-input-string 
@@ -17,10 +22,10 @@
 	 (http-version '(1 . 1))
 	 (header '())
 	 (body '()))
-  (make-request
+  (make-http-request
    method
    uri
-   version
+   http-version
    `((host . ,(assh 'host (uri-authority uri))) ,@header)
    body))
 
@@ -30,6 +35,9 @@
      ("https" . 433))
    test: equal?
    init: 80))
+
+(define (get-default-port scheme)
+  (table-ref *default-ports* 80))
 
 (define (with-tcp-client descr handler)
   (let(
@@ -52,7 +60,7 @@
 	 (call-with-output-u8vector
 	  (u8vector)
 	  (lambda (port)
-	    (write-http-request request port write))))
+	    (write-http-request body port write))))
 	(auth (uri-authority uri))
 	(host (assh 'host auth))
 	(port (or (assh 'port auth)
@@ -73,7 +81,7 @@
      (list server-address: host
 	   port-number: port
 	   eol-encoding: 'cr-lf
-	   char-encoding: ascii)
+	   char-encoding: 'ascii)
      (lambda (port) 
        (write-http-request request port)
        (force-output) 

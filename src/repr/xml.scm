@@ -1,17 +1,16 @@
 (##namespace ("ehwas-xml#"))
 
 (##include "~~/lib/gambit#.scm")
-(include "../../ansuz/sources/port#.scm")
-(include "../../ansuz/char-stream-parser#.scm")
-(include "../../ansuz/re#.scm")
-
+(include "~~/ansuz/on-ports#.scm")
+(include "~~/ansuz/re#.scm")
 (include "../http-message#.scm")
 (include "sax#.scm")
 
 (declare (standard-bindings)
          (extended-bindings)
          (fixnum)
-         ;; (not safe)
+         (not safe)
+	 (not inline)
          (block))
 
 ;; a bit involved, anyway
@@ -104,7 +103,7 @@
 (define (write-xml-expr sxml port cdata-elements #!optional (cdata #f))
   (cond
    ((string? sxml) (write-xml-string sxml port cdata))
-   ((not (pair? sxml)) (print port: port (decode sxml)))
+   ((not (pair? sxml)) (print port: port sxml))
    ((eq? (car sxml) 'top) (write-xml-fragment sxml port cdata-elements cdata))
    ((eq? (car sxml) '=) (print port: port (cadr sxml)))
    ((eq? (car sxml) '?) (write-xml-pi sxml port))
@@ -196,7 +195,7 @@
 
 (define current-cdata-elements (make-parameter '(code script)))
 
-(define (write-xml sxml header port)
+(define (write-xml sxml header port #!optional (cdata-elements (current-cdata-elements)))
   (cond
    ((u8vector? sxml) (write-subu8vector sxml 0 (u8vector-length sxml) port))
    ((procedure? sxml) (sxml port))

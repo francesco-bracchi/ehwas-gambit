@@ -14,7 +14,7 @@
          (extended-bindings)
          (block)
 	 (not inline)
-         ;; (not safe)
+	 (not safe)
 	 (fixnum)
          )
 
@@ -32,7 +32,7 @@
   (maybe (get #\"))
   (return (cons (string->symbol name) value)))
 
-(include "../~~ansuz/sources/port#.scm")
+(include "~~ansuz/sources/port#.scm")
 
 
 (define (stream-starts? stream boundary)

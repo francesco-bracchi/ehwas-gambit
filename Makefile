@@ -1,5 +1,12 @@
 GSC		=	gsc
 GSI		=	gsi
+COPY		=	cp -r
+INSTALL		= 	cp
+CATENATE	= 	cat
+REMOVE		= 	rm -r
+MAKEDIR		= 	mkdir
+CC		=	gcc -shared 
+
 LIBNAME		= 	ehwas
 SRCDIR		= 	src
 LIBDIR		= 	lib
@@ -7,35 +14,56 @@ TESTDIR		= 	test
 
 INSTALLDIR	= 	$(shell ${GSI} -e "(display (path-expand \"~~/${LIBNAME}\"))")
 SOURCES		=	$(shell ls ${SRCDIR}/*[a-zA-Z0-9].scm) $(shell ls ${SRCDIR}/repr/*[a-zA-Z0-9].scm)
-INCLUDES	=	${SRCDIR}/*.scm ${SRCDIR}/re ${SRCDIR}/sources
-OBJECTS		=	$(SOURCES:.scm=.o1)
-MAKE		=	make
-INSTALL		= 	cp
+CFILES		= 	$(SOURCES:.scm=.c)
+OBJECT_FILES	=	$(SOURCES:.scm=.o)
+INCLUDES	= 	$(shell ls ${SRCDIR}/*\#.scm) $(shell ls ${SRCDIR}/repr/*\#.scm)
+
+LINKFILE	=	$(SRCDIR)/$(LIBNAME).o1
+CLINKFILE	=	$(LINKFILE:.o1=.o1.c)
+OBJECT_LINKFILE =	$(LINKFILE:.o1=.o1.o)
+INC_LINKFILE	=       $(SRCDIR)/$(LIBNAME)\#.scm
 
 all: libdir
 
 clean: 
-	-rm $(OBJECTS)
-	-rm $(SOURCES:.scm=.scm~)
-	-rm -r ${LIBDIR}
-	-rm ${TESTDIR}/*.o1
+	-$(REMOVE) $(SRCDIR)/*~
+	-$(REMOVE) $(CFILES)
+	-$(REMOVE) $(OBJECT_FILES)
+	-$(REMOVE) $(CLINKFILE)
+	-$(REMOVE) $(LINKFILE)
+	-$(REMOVE) $(INC_LINKFILE)
+	-$(REMOVE) $(LIBDIR)
 
-libdir: compile $(LIBDIR)
-	cp $(OBJECTS) $(LIBDIR)
-	cp -r $(INCLUDES) $(LIBDIR)
+libdir: $(LINKFILE) $(LIBDIR) $(INC_LINKFILE)
+	$(COPY) $(LINKFILE) $(LIBDIR)
+	$(COPY) $(INC_LINKFILE) $(LIBDIR)
+	$(COPY) $(INCLUDES) $(LIBDIR)
 
-compile: $(OBJECTS)
+$(LINKFILE): $(OBJECT_LINKFILE) $(OBJECT_FILES)
+	$(CC) $(OBJECT_FILES) $(OBJECT_LINKFILE) -o $(LINKFILE)
+
+$(CLINKFILE):
+	$(GSC) -link -flat -o $(CLINKFILE) $(SOURCES)
+
+$(OBJECT_LINKFILE): $(CLINKFILE)
+	$(GSC) -cc-options "-D___DYNAMIC" -obj -o $(OBJECT_LINKFILE) $(CLINKFILE)
+
+$(INC_LINKFILE): 
+	$(CATENATE) $(INCLUDES) > $(INC_LINKFILE)
+
+%.o: %.c
+	$(GSC) -cc-options "-D___DYNAMIC" -obj -o $@ $<
+
+%.c : %.scm
+	$(GSC) -c -o $@ $<
 
 $(LIBDIR):
-	-mkdir $(LIBDIR)
-
-%.o1 : %.scm
-	$(GSC) -o $@ $<
+	-$(MAKEDIR) $(LIBDIR)
 
 $(INSTALLDIR): 
-	-mkdir $(INSTALLDIR)
+	-$(MAKEDIR) $(INSTALLDIR)
 
 install: libdir $(INSTALLDIR) 
 	@echo "installing in:"
 	@echo $(INSTALLDIR)
-	cp -r $(LIBDIR)/* $(INSTALLDIR)
+	$(INSTALL) -r $(LIBDIR)/* $(INSTALLDIR)

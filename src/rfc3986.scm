@@ -12,7 +12,7 @@
          (extended-bindings)
          (block)
 	 (not inline)
-         ;; (not safe)
+         (not safe)
          (fixnum))
 
 (define-structure uri 

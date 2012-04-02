@@ -9,6 +9,13 @@
 
 (include "utils#.scm")
 
+(declare (standard-bindings)
+         (extended-bindings)
+         (block)
+         (not safe)
+	 (not inline)
+         (fixnum))
+
 (define-regexp space "[ \n\t]*")
 
 (define-regexp name "[~;,=\" \n\t]+")
