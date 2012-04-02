@@ -6,7 +6,7 @@
 (include "http-message#.scm")
 (include "http-request#.scm")
 (include "http-response#.scm")
-(include "repr/template#.scm")
+;; s(include "repr/template#.scm")
 
 (declare (standard-bindings)
          (extended-bindings)
@@ -20,52 +20,43 @@
    code: 404
    status: "Not Found"
    header: `((content-type . "text/html"))
-   body: (simplify-html
-	  `(top 
+   body:  `(top 
 	    (html 
 	     (head (title "Error 404"))
 	     (body 
 	      (h1 "Error 404")
-	      (p "File not found")))))))
+	      (p "File not found"))))))
 
 (define response-400
   (http-response
    code: 400
    status: "Bad Request"
    header: `((content-type . "text/html"))
-   body: (simplify-html
-	  `(top 
+   body: `(top 
 	    (html 
 	     (head (title "Error 400"))
 	     (body 
 	      (h1 "Error 400")
-	      (p "Bad Request")))))))
+	      (p "Bad Request"))))))
 
-(define response-500 
-  (let(
-       (response-500-template
-	(template->function
-	 (simplify-html
-	  `(top 
-	    (html 
-	     (head (title "Error 500"))
-	     (body 
-	      (h1 "Error 500")
-	      (p "Internal Server Error")
-	      (pre ($ err)))))))))
-    (lambda (cont exc)
-      (let(
-	   (err
-	    (call-with-output-string 
-	     ""
-	     (lambda (port)
-	       (display-exception-in-context exc cont port)
-	       (display-continuation-backtrace cont port #t #t 10 4)))))
-	(http-response
-	 code: 500
-	 status: "Internal Server Error"
-	 header: `((content-type . "text/html"))
-	 body: (response-500-template err: err))))))
+(define (response-500 cont exc)
+  (let((err
+	(call-with-output-string 
+	 ""
+	 (lambda (port)
+	   (display-exception-in-context exc cont port)
+	   (display-continuation-backtrace cont port #t #t 10 4)))))
+    (http-response
+     code: 500
+     status: "Internal Server Error"
+     header: `((content-type . "text/html"))
+     body: `(top 
+	     (html 
+	      (head (title "Error 500"))
+	      (body 
+	       (h1 "Error 500")
+	       (p "Internal Server Error")
+	       (pre ,err)))))))
 
 (define (http-server-exception-handler ex)
   (write-http-response (response-500 ex))

@@ -71,18 +71,18 @@
 		    (match-pattern `(vector-ref ,v ,j) 
 				   (car as) 
 				   (matcher (cdr as) (+ j 1))
-				   `(,f))))))))))
+				   `(,f))))))))
 
-(define (match-pattern value pattern action fail)
-  (cond
-   ((null? pattern)`(if (null? ,value) ,action ,fail))
-   ((eq? pattern '_) action)
-   ((const? pattern) `(if (eq? ,value ,pattern) ,action ,fail))
-   ((symbol? pattern) `(let((,pattern ,value)) ,action))
-   ((pair? pattern) (match-pair value pattern action fail))
-   ((vector? pattern) (match-vector valeu pattern action fail))
+  (define (match-pattern value pattern action fail)
+    (cond
+     ((null? pattern)`(if (null? ,value) ,action ,fail))
+     ((eq? pattern '_) action)
+     ((const? pattern) `(if (eq? ,value ,pattern) ,action ,fail))
+     ((symbol? pattern) `(let((,pattern ,value)) ,action))
+     ((pair? pattern) (match-pair value pattern action fail))
+     ((vector? pattern) (match-vector valeu pattern action fail))
    (else (error "pattern matching failed at " ,pattern))))
-
+  
   (cond
    ((null? patterns) 
     `(error "cannot match"))

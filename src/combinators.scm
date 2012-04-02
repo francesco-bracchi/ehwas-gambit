@@ -115,12 +115,18 @@
    ((eq? (car prefix) (car path)) (strip-path-prefix (cdr path) (cdr prefix)))
    (else #f)))
 
+(define current-prefix (make-parameter '()))
+
+(define (local-ref l #!optional (prefix (current-prefix)))
+  (append prefix l))
+
 (define (with-prefix prefix handler)
   (lambda (request)
-    (let(
-	 (path1 (strip-path-prefix (uri-path (http-request-uri request)) prefix)))
+    (let((path1 (strip-path-prefix (uri-path (http-request-uri request)) prefix)))
       (and path1
-	   (handler (request-with-new-path request path1))))))
+	   (parameterize
+	    ((current-prefix (append (current-prefix) prefix)))
+	    (handler (request-with-new-path request path1)))))))
 
 (define (allow test? handler)
   (lambda (request)

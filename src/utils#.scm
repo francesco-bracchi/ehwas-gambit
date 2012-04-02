@@ -7,7 +7,6 @@
   memoize1
   parse-header-fields
   identity
-  *html-empty-types*
   let?
   ))
 

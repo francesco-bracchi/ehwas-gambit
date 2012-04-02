@@ -30,9 +30,14 @@ clean:
 	-$(REMOVE) $(CFILES)
 	-$(REMOVE) $(OBJECT_FILES)
 	-$(REMOVE) $(CLINKFILE)
+	-$(REMOVE) $(OBJECT_LINKFILE)
 	-$(REMOVE) $(LINKFILE)
 	-$(REMOVE) $(INC_LINKFILE)
 	-$(REMOVE) $(LIBDIR)
+
+clean-linkfile:
+	-$(REMOVE) $(CLINKFILE)
+	-$(REMOVE) $(LINKFILE)
 
 libdir: $(LINKFILE) $(LIBDIR) $(INC_LINKFILE)
 	$(COPY) $(LINKFILE) $(LIBDIR)
@@ -51,7 +56,7 @@ $(OBJECT_LINKFILE): $(CLINKFILE)
 $(INC_LINKFILE): 
 	$(CATENATE) $(INCLUDES) > $(INC_LINKFILE)
 
-%.o: %.c
+%.o: %.c clean-linkfile
 	$(GSC) -cc-options "-D___DYNAMIC" -obj -o $@ $<
 
 %.c : %.scm
