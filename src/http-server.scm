@@ -67,15 +67,19 @@
     (call/cc
      (lambda (exit)
        (let handle-more ()
-	 (let((request (read-http-request)))
-	   (if (http-request? request)
-	       (with-exception-handler
-		(lambda (ex) 
-		  (continuation-capture 
-		   (lambda (cont) 
-		     (write-http-response (response-500 cont ex))))
-		  (exit #f))
-		(lambda ()
+	 (with-exception-handler
+	  (lambda (ex) 
+	    ;; (continuation-capture 
+	    ;;  (lambda (cont) 
+	    ;;    (write-http-response (response-500 cont ex))))
+	    (continuation-capture
+	     (lambda (cont)
+	       (display-exception-in-context ex cont (current-output-port))
+	       (display-continuation-backtrace cont (current-output-port) #t #t 10 4)))
+	    (exit #f))
+	  (lambda ()
+	    (let((request (read-http-request)))
+	      (if (http-request? request)
 		  (let ((response (handler request)))
 		    (if (http-response? response)
 			(let*(
@@ -95,8 +99,8 @@
 			  (write-http-response response)
 			  (force-output)
 			  (if keep-alive? (handle-more)))
-			(write-http-response response-404)))))
-	       (write-http-response response-400))))))))
+			(write-http-response response-404)))
+		  (write-http-response response-400))))))))))
 
 (define (with-tcp-port handler)
   (lambda ()
