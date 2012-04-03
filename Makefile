@@ -11,6 +11,7 @@ LIBNAME		= 	ehwas
 SRCDIR		= 	src
 LIBDIR		= 	lib
 TESTDIR		= 	test
+EXAMPLEDIR	=	examples
 
 INSTALLDIR	= 	$(shell ${GSI} -e "(display (path-expand \"~~/${LIBNAME}\"))")
 SOURCES		=	$(shell ls ${SRCDIR}/*[a-zA-Z0-9].scm) $(shell ls ${SRCDIR}/repr/*[a-zA-Z0-9].scm)
@@ -56,7 +57,7 @@ $(OBJECT_LINKFILE): $(CLINKFILE)
 $(INC_LINKFILE): 
 	$(CATENATE) $(INCLUDES) > $(INC_LINKFILE)
 
-%.o: %.c clean-linkfile
+%.o: %.c 
 	$(GSC) -cc-options "-D___DYNAMIC" -obj -o $@ $<
 
 %.c : %.scm
@@ -72,3 +73,7 @@ install: libdir $(INSTALLDIR)
 	@echo "installing in:"
 	@echo $(INSTALLDIR)
 	$(INSTALL) -r $(LIBDIR)/* $(INSTALLDIR)
+
+cont: libdir
+	@echo "testing continuation"
+	$(GSI) -:~~$(LIBNAME)=$(LIBDIR) -e "(load \"~~$(LIBNAME)/$(LIBNAME)\")" $(EXAMPLEDIR)/cont
