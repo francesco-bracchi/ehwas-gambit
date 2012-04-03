@@ -81,7 +81,7 @@
      ((symbol? pattern) `(let((,pattern ,value)) ,action))
      ((pair? pattern) (match-pair value pattern action fail))
      ((vector? pattern) (match-vector valeu pattern action fail))
-   (else (error "pattern matching failed at " ,pattern))))
+   (else (error "pattern matching failed at " pattern))))
   
   (cond
    ((null? patterns) 
@@ -104,7 +104,7 @@
     `(let*((,m (http-request-method ,r))
            (,u (http-request-uri ,r))
            (,p (uri-path ,u)))
-       (ehwas-routes#match (cons m p) ,patterns))))
+       (ehwas-routes#match (cons ,m ,p) ,@patterns))))
               
 (define-macro (define-handler head . patterns)
   (let((request-name (cadr head)))
