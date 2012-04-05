@@ -69,9 +69,6 @@
        (let handle-more ()
 	 (with-exception-handler
 	  (lambda (ex) 
-	    ;; (continuation-capture 
-	    ;;  (lambda (cont) 
-	    ;;    (write-http-response (response-500 cont ex))))
 	    (continuation-capture
 	     (lambda (cont)
 	       (display-exception-in-context ex cont (current-output-port))
@@ -94,8 +91,7 @@
 						(equal? (car request-connection)  "Keep-Alive")
 						(not (and response-connection 
 							  (equal? (car response-connection) "Close")))))
-			      (content-length? (assh 'content-length response-header))
-			      (zip? (member 'zip (assh 'accept-encoding request-header))))
+			      (content-length? (assh 'content-length response-header)))
 			  (write-http-response response)
 			  (force-output)
 			  (if keep-alive? (handle-more)))
