@@ -189,13 +189,19 @@
   (for-each (lambda (x) (display x port))
 	    data))
 
-(define (read-xml header port)
+(define (read-xml #!optional 
+		  (header '())
+		  (port (current-input-port)))
   (let((result (run (sxml) port)))
     (cons (car result) (reverse (cdr result)))))
 
 (define current-cdata-elements (make-parameter '(code script)))
 
-(define (write-xml sxml header port #!optional (cdata-elements (current-cdata-elements)))
+(define (write-xml sxml 
+		   #!optional 
+		   (header '())
+		   (port (current-output-port))
+		   (cdata-elements (current-cdata-elements)))
   (cond
    ((u8vector? sxml) (write-subu8vector sxml 0 (u8vector-length sxml) port))
    ((procedure? sxml) (sxml port))
