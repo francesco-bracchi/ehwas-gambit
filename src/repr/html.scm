@@ -98,9 +98,9 @@
    ((symbol? (car html)) (write-html-node html port cdata-elements))
    (else (write-html-fragment html port cdata-elements cdata))))
 
-(define (write-html-fragment html port cdata-elements cdata)
+(define (write-html-fragment frag port cdata-elements cdata)
   (for-each (lambda (child) (write-html-expr child port cdata-elements cdata))
-	    html))
+	    frag))
 
 (define (write-html-string string port #!optional cdata)
   (for-each-display  port (map (lambda (ch)
@@ -164,13 +164,15 @@
   (for-each (lambda (x) (display x port))
 	    data))
 
-(define (read-html header port)
+(define (read-html #!optional (header '()) (port (current-input-port)))
   (let((result (run (html) port)))
     (cons (car result) (reverse (cdr result)))))
 
 (define current-cdata-elements (make-parameter '(code)))
 
-(define (write-html html header port)
+(define (write-html html #!optional 
+		    (header '()) 
+		    (port (current-output-port)))
   (cond
    ((u8vector? html) (write-subu8vector html 0 (u8vector-length html) port))
    ((string? html)  (display html port))

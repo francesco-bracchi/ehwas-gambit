@@ -103,11 +103,11 @@
   #\? #\>
   (return (handler state name text)))
 
-(define-parser (xml-attribute-value)
-  #\"
-  (<- text (xml-attribute-text))
-  #\"
-  (return text))
+;; (define-parser (xml-attribute-value)
+;;   #\"
+;;   (<- text (xml-attribute-text))
+;;   #\"
+;;   (return text))
 
 (define-parser (xml-attribute-value)
   (reflect (ts sc fl)
