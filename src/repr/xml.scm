@@ -67,8 +67,7 @@
 			     (cons (car lst) rev)))))))
 			  
 (define (pop stack)
-  (let*(
-	(curr (car stack))
+  (let*((curr (car stack))
 	(prev (cadr stack))
 	(rest (cddr stack))
 	(current (cons (car curr) (merge-and-reverse (cdr curr))))
@@ -109,7 +108,8 @@
    ((eq? (car sxml) '?) (write-xml-pi sxml port))
    ((eq? (car sxml) '!--) (write-xml-comment sxml port))
    ((eq? (car sxml) '&) (write-xml-entity sxml port))
-   (else (write-xml-node sxml port cdata-elements))))
+   ((symbol? (car sxml)) (write-xml-node sxml port cdata-elements))
+   (else (write-xml-fragment sxml port cdata-elements cdata))))
 
 (define (write-xml-fragment sxml port cdata-elements cdata)
   (for-each (lambda (child) (write-xml-expr child port cdata-elements cdata))

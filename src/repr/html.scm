@@ -36,19 +36,17 @@
 (define (html-comment stack name text)
   (push (list '!-- text) stack))
 
+;; TODO: add numeric entities
 (define (html-entity stack name text)
   (cond
    ((eq? name 'gt) (push ">" stack))
    ((eq? name 'lt) (push "<" stack))
    ((eq? name 'amp) (push "&" stack))
    ((eq? name 'nbsp) (push " " stack))
-   (else
-    (push (list '& name) stack))))
-
+   (else (push (list '& name) stack))))
 
 (define (html-open stack name attributes)
-  (let(
-       (stack1 (cons 
+  (let((stack1 (cons 
 		(if (null? attributes) 
 		    (list name)
 		    (list name (cons '@ attributes)) )
@@ -58,8 +56,7 @@
 	stack1)))
 
 (define (pop stack)
-  (let*(
-	(curr (car stack))
+  (let*((curr (car stack))
 	(prev (cadr stack))
 	(rest (cddr stack))
 	(current (cons (car curr) (reverse (cdr curr))))
@@ -73,12 +70,9 @@
       (pop stack)
       (let find ((pstack stack))
 	(cond
-	 ((null? pstack) 
-	  stack)	 
-	 ((eq? (caar pstack) name)
-	  (pop pstack))
-	 (else
-	  (find (pop pstack)))))))
+	 ((null? pstack) stack)
+	 ((eq? (caar pstack) name) (pop pstack))
+	 (else (find (pop pstack)))))))
 
 (define-parser (html)
   (<- stack (sax '((top))
@@ -91,17 +85,22 @@
   (return (car stack)))
 
 ;; WRITE PROCEDURES
-
 (define (write-html-expr html port cdata-elements #!optional (cdata #f))
   (cond
    ((string? html) (write-html-string html port cdata))
    ((not (pair? html)) (print port: port html))
+   ((eq? (car html) 'top) (write-html-fragment (cdr html) port cdata-elements cdata))
    ((eq? (car html) 'unquote) (print port: port (cadr html)))
    ((eq? (car html) '=) (print port: port (cadr html)))
    ((eq? (car html) '?) (write-html-pi html port))
    ((eq? (car html) '!--) (write-html-comment html port))
    ((eq? (car html) '&) (write-html-entity html port))
-   (else (write-html-node html port cdata-elements))))
+   ((symbol? (car html)) (write-html-node html port cdata-elements))
+   (else (write-html-fragment html port cdata-elements cdata))))
+
+(define (write-html-fragment html port cdata-elements cdata)
+  (for-each (lambda (child) (write-html-expr child port cdata-elements cdata))
+	    html))
 
 (define (write-html-string string port #!optional cdata)
   (for-each-display  port (map (lambda (ch)
@@ -138,8 +137,7 @@
 	   (string->list string))))))
 
 (define (write-html-node node port cdata-elements)
-  (let*(
-	(type (car node))
+  (let*((type (car node))
 	(second-element (and (pair? (cdr node)) (cadr node)))
 	(attributes (if (and (pair? second-element) (eq? (car second-element) '@))
 			(cdr second-element) '()))
@@ -178,9 +176,7 @@
    ((string? html)  (display html port))
    ((procedure? html) (html port))
    ((not html) 'OK)
-   (else
-    (for-each (lambda (e) (write-html-expr e port (current-cdata-elements)))
-              (cdr html)))))
+   (else (write-html-expr html port (current-cdata-elements)))))
       
 (define (html->string html)
   (call-with-output-string "" (lambda (port) (write-html html port))))

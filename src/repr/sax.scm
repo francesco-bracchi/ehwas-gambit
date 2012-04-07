@@ -103,40 +103,35 @@
   #\? #\>
   (return (handler state name text)))
 
-;; BUG in expression (regexp "([~\n]|\\\\\")*")
-;; check if fixed
-
-(define-regexp xml-attribute-text "([~\n]|\\\\\")*")
-
 (define-parser (xml-attribute-value)
   #\"
   (<- text (xml-attribute-text))
   #\"
   (return text))
 
-;; (define-parser (xml-attribute-value)
-;;   (reflect (ts sc fl)
-;; 	   (let((data (make-string 1024))
-;; 		(c (stream-car ts)))
-;; 	     (if (eq? c #\")
-;; 		 (let loop ((ts (stream-cdr ts)) (j 0))
-;; 		   (let((c (stream-car ts)))
-;; 		     (cond
-;; 		      ((eq? c #\")
-;; 		       (sc (substring data 0 j) (stream-cdr ts) fl))
-;; 		      ((eq? c #\\)
-;; 		       (let*((ts (stream-cdr ts))
-;; 			     (c (stream-car ts)))
-;; 			 (if (eof-object? c) (fl 'eof ts sc)
-;; 			     (begin
-;; 			       (string-set! data j c)
-;; 			       (loop (stream-cdr ts) (+ j 1))))))
-;; 		      ((char? c)
-;; 		       (string-set! data j c)
-;; 		       (loop (stream-cdr ts) (+ j 1)))
-;; 		      (else
-;; 		       (fl 'eof ts sc)))))
-;; 		 (fl 'dc ts sc)))))
+(define-parser (xml-attribute-value)
+  (reflect (ts sc fl)
+	   (let((data (make-string 1024))
+		(c (stream-car ts)))
+	     (if (eq? c #\")
+		 (let loop ((ts (stream-cdr ts)) (j 0))
+		   (let((c (stream-car ts)))
+		     (cond
+		      ((eq? c #\")
+		       (sc (substring data 0 j) (stream-cdr ts) fl))
+		      ((eq? c #\\)
+		       (let*((ts (stream-cdr ts))
+			     (c (stream-car ts)))
+			 (if (eof-object? c) (fl 'eof ts sc)
+			     (begin
+			       (string-set! data j c)
+			       (loop (stream-cdr ts) (+ j 1))))))
+		      ((char? c)
+		       (string-set! data j c)
+		       (loop (stream-cdr ts) (+ j 1)))
+		      (else
+		       (fl 'eof ts sc)))))
+		 (fl 'dc ts sc)))))
 
 (define-parser (xml-attribute)
   (<- name (xml-name))
@@ -160,7 +155,7 @@
 	  (return (open state name as)))))
 
 (define-parser (xml-close state handler)
-  #\<
+  #\< #\/
   (<- name (xml-name))
   (maybe-xml-space)
   #\>
