@@ -10,7 +10,6 @@ CC		=	gcc -shared
 LIBNAME		= 	ehwas
 SRCDIR		= 	src
 LIBDIR		= 	lib
-TESTDIR		= 	test
 EXAMPLEDIR	=	examples
 
 INSTALLDIR	= 	$(shell ${GSI} -e "(display (path-expand \"~~/${LIBNAME}\"))")
@@ -23,6 +22,9 @@ LINKFILE	=	$(SRCDIR)/$(LIBNAME).o1
 CLINKFILE	=	$(LINKFILE:.o1=.o1.c)
 OBJECT_LINKFILE =	$(LINKFILE:.o1=.o1.o)
 INC_LINKFILE	=       $(SRCDIR)/$(LIBNAME)\#.scm
+
+TESTDIR		= 	test
+TESTFILES	= 	$(shell ls ${TESTDIR}/*[a-zA-Z0-9].scm)
 
 all: libdir
 
@@ -77,3 +79,7 @@ install: libdir $(INSTALLDIR)
 cont: libdir
 	@echo "testing continuation"
 	$(GSI) -:~~$(LIBNAME)=$(LIBDIR) -e "(load \"~~$(LIBNAME)/$(LIBNAME)\")" $(EXAMPLEDIR)/cont
+
+test: libdir
+	@echo "tests"
+	$(GSI) -:~~$(LIBNAME)=$(LIBDIR) -e "(load \"~~$(LIBNAME)/$(LIBNAME)\")" $(TESTFILES) -e "(newline)"
