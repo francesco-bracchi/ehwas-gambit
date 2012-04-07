@@ -25,7 +25,7 @@
   (return (cons (string->symbol (pct-decode key))
 		(pct-decode value))))
 
-(define-parser (urlencoded encode)
+(define-parser (urlencoded)
   (<> (>> (<- first (urlencoded-pair))
 	  (<- rest (kleene (>> (char #\&) (urlencoded-pair))))
 	  (eos)
@@ -46,7 +46,7 @@
 	(read (read-subu8vector buff 0 size port)))
     (if (and  (= spur 10) (= read size)) ;; Investigate why we 've got this spurious #\linefeed char here
 	(call-with-input-u8vector buff (lambda (p) (run (urlencoded) p)))
-	(error "can't read urlencoded stuff"))))
+	(error "can't read urlencoded"))))
 
 (define (write-urlencoded-pair pair #!optional (port (current-output-port)))
   (print port: port
