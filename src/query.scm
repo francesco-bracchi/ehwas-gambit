@@ -33,7 +33,7 @@
   (call-with-input-string
    str
    (lambda (port)
-     (run (urlencoded identity) port))))
+     (run (urlencoded) port))))
 
 (define parse-query (memoize1 really-parse-query))
 
@@ -43,8 +43,7 @@
 	  '()))
 
 (define (post-query request)
-  (let(
-       (body (http-message-body request)))
+  (let((body (http-message-body request)))
     (if (pair? body) body '())))
 
 (define (request-query request)
