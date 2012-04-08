@@ -70,12 +70,15 @@
 	 (as (node-attributes n))
 	 (cs (node-children n)))
       (concat "<" (symbol->string t) 
-	      (if (null? as) "" (concat " " (map flatten-attributes as)))
-	      (if (and (memq t autoclose) (null? cs)) ">" "")
-	      ">" (map flatten cs) "</" (symbol->string t) ">")))
+	      (if (null? as) "" (map flatten-attributes as))
+	      (cond
+	       ((and (eq? mode 'xml) (null? cs)) "/>")
+	       ((and (eq? mode 'html) (null? cs) (memq t autoclose)) ">")
+	       (else (concat ">" (map flatten cs) "</" (symbol->string t) ">"))))))
 
   (define (flatten-attributes a)
-    (concat (symbol->string (car a))
+    (concat " " 
+	    (symbol->string (car a))
 	    "=\""
 	    (flatten (cdr a))
 	    "\""))
