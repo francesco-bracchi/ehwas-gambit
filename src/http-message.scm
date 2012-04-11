@@ -194,7 +194,8 @@
 (define http-request-header http-message-header)
 (define http-request-body http-message-body)
 
-
+(define (http-request-path request)
+  (uri-path (http-request-uri request)))
 
 ;;; http-response.scm
 (##namespace ("ehwas-response#"))
