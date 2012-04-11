@@ -6,13 +6,13 @@
 (include "http-message#.scm")
 (include "http-request#.scm")
 (include "http-response#.scm")
-;; s(include "repr/template#.scm")
+;; (include "repr/template#.scm")
 
 (declare (standard-bindings)
          (extended-bindings)
          (block))
 
-(define current-http-port (make-parameter #f))
+;; (define current-http-port (make-parameter #f))
 (define max-idle-time (make-parameter 30))
 
 (define response-404
@@ -98,11 +98,11 @@
 			(write-http-response response-404)))
 		  (write-http-response response-400))))))))))
 
-(define (with-tcp-port handler)
-  (lambda ()
-    (parameterize
-     ((current-http-port (current-input-port)))
-     (handler))))
+;; (define (with-tcp-port handler)
+;;   (lambda ()
+;;     (parameterize
+;;      ((current-http-port (current-input-port)))
+;;      (handler))))
 
 (define (http-service-register! 
 	 handler 
@@ -121,4 +121,4 @@
          char-encoding: 'ASCII
          eol-encoding: 'cr-lf
          buffering: #f)
-   (with-tcp-port (http-service handler))))
+   (http-service handler)))

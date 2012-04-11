@@ -104,7 +104,7 @@ end-format-time
     (print
      port: p
      `(,(datetime) " "
-       ,(address->string (socket-info-address (tcp-client-peer-socket-info (current-http-port)))) " "
+       ,(address->string (socket-info-address (tcp-client-peer-socket-info (current-input-port)))) " "
        ,(http-request-method req) " "
        ,(let(
 	     (host (assoc 'Host (http-request-header req))))
