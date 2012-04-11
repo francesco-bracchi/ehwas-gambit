@@ -106,22 +106,22 @@
 (define-regexp re-segment-nz-nc "([a-zA-Z0-9\\-\\.\\_\\~!$&'\\(\\)\\*\\+,;=:]|%[0-9a-fA-F]{2})+")
 
 (define-parser (segment-nz-nc)
-  (>> (<- r (re-segment-nz-nc)) 
+  (>> (<- r (re-segment-nz-nc))
       (return (string->segment (pct-decode r)))))
 
 (define-parser (path-abempty)
-  (<> (>> (char #\/)
+  (<> (>> #\/
           (<- s (segment))
           (<- ss (path-abempty))
           (return (cons s ss)))
       (return '())))
 
 (define-parser (path-absolute)
-  (<> (>> (char #\/)
-          (<- s (segment-nz))
+  #\/
+  (<> (>> (<- s (segment-nz))
           (<- ss (path-abempty))
-          (return `(,s ,@ss)))
-      (>> (char #\/) (return '()))))
+          (return (cons s ss)))
+      (return '())))
 
 (define-parser (path-noscheme)
   (>> (<- s (segment-nz-nc))
@@ -152,7 +152,7 @@
 (define-regexp re-fragment "([a-zA-Z0-9\\-\\.\\_\\~!$&\\'\\(\\)\\*\\+,;=\\/\\?]|%[0-9a-fA-F]{2})*")
 
 (define-parser (fragment)
-  (<> (>> (char #\#)
+  (<> (>> #\#
 	  (<- cs (re-fragment))
 	  (return (pct-decode cs)))
       (return #f)))
@@ -160,7 +160,7 @@
 (define-parser (absolute)
   (>> (<- s (scheme))
       (char #\:)
-      (<> (>> (regexp "//")
+      (<> (>> #\/ #\/
               (<- a  (authority))
               (<- pa (path-abempty))
               (<- q  (query))
@@ -174,7 +174,7 @@
               (return (make-uri s '() pa q f))))))
 
 (define-parser (relative)
-  (<> (>> (regexp "//")
+  (<> (>> #\/ #\/
           (<- a  (authority))
           (<- pa (path-abempty))
           (<- q  (query))
