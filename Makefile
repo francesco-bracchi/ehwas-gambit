@@ -76,9 +76,11 @@ install: libdir $(INSTALLDIR)
 	@echo $(INSTALLDIR)
 	$(INSTALL) -r $(LIBDIR)/* $(INSTALLDIR)
 
-cont: libdir
+composable: libdir
 	@echo "testing continuation"
-	$(GSI) -:~~$(LIBNAME)=$(LIBDIR) -e "(load \"~~$(LIBNAME)/$(LIBNAME)\")" $(EXAMPLEDIR)/cont
+	@echo "connect to http://localhost:6080"
+	@echo
+	$(GSI) -:~~$(LIBNAME)=$(LIBDIR) $(LIBDIR)/$(LIBNAME) $(EXAMPLEDIR)/shift-reset $(EXAMPLEDIR)/composable
 
 test: libdir
 	@echo "tests"
