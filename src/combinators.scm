@@ -185,3 +185,9 @@
 	     (http-message-body response)
 	     (http-response-code response)
 	     (http-response-status response)))))))
+
+(define (compose f . fs)
+  (let compose ((f f) (fs fs))
+    (if (null? fs) f
+	(let((g (car fs)))
+	  (compose (lambda (x) (f (g x))) (cdr fs))))))
