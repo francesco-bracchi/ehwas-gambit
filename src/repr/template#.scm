@@ -1,8 +1,8 @@
-(##namespace ("ehwas-template#" tq))
+(##namespace ("ehwas-template#" template))
 	   
-(define-macro (tq e #!key 
-		  (mode 'html) 
-		  (autoclose '(area base basefont br col frame hr img input isindex link meta param)))
+(define-macro (template e #!key 
+			(mode 'html) 
+			(autoclose '(area base basefont br col frame hr img input isindex link meta param)))
   
   (define (top? e)
     (and (pair? e) (eq? (car e) 'top)))
@@ -120,3 +120,19 @@
 	(map (lambda (e) (if (string? e) `(= ,(##still-copy e)) e))
 	     (if (top? e) `(top ,@(simplify e))
 		 (simplify e)))))
+
+(define-macro (html-frag . frag)
+  `(template ,frag mode: 'html))
+
+(define-macro (xml-frag . frag)
+  `(template ,frag mode: 'xml))
+
+(define-macro (xml . x)
+  `(template
+    (top ,@x)))
+
+(define-macro (html . x)
+  `(template
+    (top (html ,@x))))
+
+  
