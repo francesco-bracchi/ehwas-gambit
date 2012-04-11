@@ -104,3 +104,20 @@
 	     header))
 
 (define *html-empty-types* '(br hr))
+
+(define (make-uid #!optional (digits 10))
+  (string->symbol
+   (list->string
+    (random-list digits))))
+
+(define (random-list n)
+  (let random-list ((n n) (rs '()))
+    (if (= n 0) rs
+	(random-list (- n 1) (cons (random-char) rs)))))
+
+(define *chars* "0123456789abcdefgjkhilmnopqrtuvxywzABCDEFGJKHILMNOPQRTUVXYWZ")
+
+(define (random-char)
+  (string-ref *chars* (random-integer (string-length *chars*))))
+
+(define current-resume-table (make-parameter (make-table init: #f)))
