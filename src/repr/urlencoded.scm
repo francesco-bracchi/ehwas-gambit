@@ -17,20 +17,20 @@
          (fixnum))
 
 (define-regexp urlencoded-token "[~\\&\\?\\=]+")
-  
+
 (define-parser (urlencoded-pair)
   (<- key (urlencoded-token))
-  (get #\=)
+  #\=
   (<- value (urlencoded-token))
-  (return (cons (string->symbol (pct-decode key))
-		(pct-decode value))))
+  (ret (cons (string->symbol (pct-decode key))
+	     (pct-decode value))))
 
 (define-parser (urlencoded)
-  (<> (>> (<- first (urlencoded-pair))
-	  (<- rest (kleene (>> (char #\&) (urlencoded-pair))))
-	  (eos)
-	  (return (cons first rest)))
-      (return '())))
+  (alt (cat (<- first (urlencoded-pair))
+	    (<- rest (many (cat #\& (urlencoded-pair))))
+	    (eos)
+	    (ret (cons first rest)))
+       (ret '())))
 
 (define (u8vector->string vect)
   (call-with-input-u8vector vect

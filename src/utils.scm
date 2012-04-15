@@ -59,39 +59,39 @@
 (define-regexp semicolumn "[ \n\t]*;[ \n\t]*")
 
 (define-parser (quoted-string) 
-  (>> (get #\")
-      (<- string (kleene (<> (>> (get #\\) (any))
-			     (get-if (lambda (ch) (not (eq? ch #\")))))))
-      (get #\")
-      (return (list->string string))))
+  #\"
+  (<- string (many (cat (alt #\\ (any))
+			(get-if (lambda (ch) (not (eq? ch #\")))))))
+  #\"
+  (ret (list->string string)))
 
 (define-parser (field-value)
-  (<> (>> (<- first (token))
-	  (<- rest (kleene (>> (comma) (token))))
-	  (space) 
-	  (eos)
-	  (return (cons first rest)))
-      (return #f)))
+  (alt (cat (<- first (token))
+	    (<- rest (many (cat (comma) (token))))
+	    (space) 
+	    (eos)
+	    (ret (cons first rest)))
+       (ret #f)))
 
 (define-parser (token)
-  (<- token-name (<> (quoted-string) (name)))
+  (<- token-name (alt (quoted-string) (name)))
   (space)
   (<- token-attributes (attributes))
   (space)
-  (return (if (null? token-attributes) 
-	      token-name
-	      (cons token-name token-attributes))))
+  (ret (if (null? token-attributes) 
+	   token-name
+	   (cons token-name token-attributes))))
 
 (define-parser (attributes)
-  (kleene (>> (semicolumn) (attribute))))
+  (many (cat (semicolumn) (attribute))))
 
 (define-parser (attribute)
-  (<- key (<> (quoted-string) (name)))
+  (<- key (alt (quoted-string) (name)))
   (space)
   (char #\=)
   (space)
-  (<- value (<> (quoted-string) (name)))
-  (return (cons (string->symbol key) value)))
+  (<- value (alt (quoted-string) (name)))
+  (ret (cons (string->symbol key) value)))
 
 
 (define (parse-field-value value)

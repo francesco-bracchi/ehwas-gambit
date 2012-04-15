@@ -82,7 +82,7 @@
 		 html-pi 
 		 html-comment
 		 html-entity))
-  (return (car stack)))
+  (ret (car stack)))
 
 ;; WRITE PROCEDURES
 (define (write-html-expr html port cdata-elements #!optional (cdata #f))

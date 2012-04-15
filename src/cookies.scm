@@ -25,18 +25,15 @@
 (define-parser (cookie-field)
   (<- nam (regexp "[~= ]*"))
   (spaces) 
-  (get #\=) 
+  #\=
   (spaces)
   (<- val (regexp "[~;\n]*"))
-  (return (cons (string->symbol nam) val)))
+  (ret (cons (string->symbol nam) val)))
 
 (define-parser (cookies)
   (<- first (cookie-field))
-  (<- rest (kleene (>> (spaces)
-		       (get #\;)
-		       (spaces)
-		       (cookie-field))))
-  (return (cons first rest)))
+  (<- rest (many (cat (spaces) #\; (spaces) (cookie-field))))
+  (ret (cons first rest)))
 
 (define (really-request-cookies request)
   (let(

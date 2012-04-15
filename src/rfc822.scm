@@ -21,38 +21,36 @@
 
 (define-parser (field-value)
   (<- tokens (field-value-more '()))
-  (return (apply string-append tokens)))
+  (ret (apply string-append tokens)))
 
 (define-parser (field-value-more tokens)
-  (>> (<- token (regexp "[~\n]*"))
-      (let(
-	   (tokens (cons token tokens)))
-	(<> (field-value-continue tokens)
-	    (field-value-end tokens)))))
+  (cat (<- token (regexp "[~\n]*"))
+       (let((tokens (cons token tokens)))
+	 (alt (field-value-continue tokens)
+	      (field-value-end tokens)))))
 
 (define-parser (field-value-continue tokens)
-  (>> (regexp "\n[\t ]")
-      (field-value-more tokens)))
+  (cat (regexp "\n[\t ]")
+       (field-value-more tokens)))
 
 (define-parser (field-value-end tokens)
-  (>> (get #\newline)
-      (return (reverse tokens))))
+  (cat #\newline (ret (reverse tokens))))
 
 (define-parser (rfc822)
   (rfc822-more '()))
 
 (define-parser (rfc822-more alst)
-  (<> (>> (get #\newline)
-	  (return (reverse alst)))
-      (>> (<- key-value (field))
-	  (rfc822-more (cons key-value alst)))))
-  
+  (alt (cat #\newline
+	    (ret (reverse alst)))
+       (cat (<- key-value (field))
+	    (rfc822-more (cons key-value alst)))))
+
 (define-parser (field)
   (<- k (field-key))
-  (get #\:)
+  #\:
   (space)
   (<- v (field-value))
-  (return (cons (string->symbol (string-downcase k)) v)))
+  (ret (cons (string->symbol (string-downcase k)) v)))
 
 (define (read-rfc822 #!optional (port (current-input-port)))
   (run (rfc822) port))

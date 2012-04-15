@@ -18,69 +18,65 @@
 (define-regexp space "[\t\n ]*")
 
 (define-parser (json)
-  (<> (json-object)
-      (json-array)
-      (json-true)
-      (json-false)
-      (json-null)
-      (json-string)
-      (json-number)))
+  (alt (json-object)
+       (json-array)
+       (json-true)
+       (json-false)
+       (json-null)
+       (json-string)
+       (json-number)))
 
 (define-parser (json-object)
-  (get #\{)
+  #\{
   (space)
   (<- frst (json-object-pair))
-  (<- rest (kleene (>> (space) (get #\,) (space) (json-object-pair))))
+  (<- rest (many (cat (space) #\, (space) (json-object-pair))))
   (space)
-  (get #\})
-  (return (cons frst rest)))
+  #\}
+  (ret (cons frst rest)))
 
 (define-parser (json-object-pair)
   (<- key (json-string))
   (space)
-  (get #\:)
+  #\:
   (space)
   (<- x (get-stream))
   (<- value (json))
   (<- y (get-stream))
-  (return (cons (string->symbol key) value)))
+  (ret (cons (string->symbol key) value)))
 
 (define-parser (json-array)
-  (get #\[)
+  #\[
   (space)
   (<- first (json))
-  (<- rest (kleene (>> (space)
-		       (get #\,)
-		       (space)
-		       (json))))
+  (<- rest (many (cat (space) #\, (space) (json))))
   (space)
-  (get #\])
-  (return (list->vector (cons first rest))))
+  #\]
+  (ret (list->vector (cons first rest))))
 
 (define-parser (json-true)
   (regexp "true")
-  (return #t))
+  (ret #t))
 
 (define-parser (json-false)
   (regexp "false")
-  (return #f))
+  (ret #f))
 
 ;; it is void because '() is the empty dictionary
 (define-parser (json-null)
   (regexp "null")
-  (return #!void))
+  (ret #!void))
 
 (define-parser (json-string)
-  (get #\")
-  (<- string (kleene (<> (>> (get #\\) (any))
-                         (get-if (lambda (ch) (not (eq? ch #\")))))))
+  #\"
+  (<- string (many (alt (cat #\\ (any)) (get-if (lambda (ch) (not (eq? ch #\")))))))
   ;; (<- string (regexp "([~\"]|\\\\\")*"))
-  (get #\")
-  (return (list->string  string)))
+  #\"
+  (ret (list->string  string)))
 
 (define-parser (json-number)
   (<- num (regexp "\\-?(0|[1-9][0-9]*)(\\.[0-9]*)?([eE][\\+\\-]?[0-9]*)?"))
-  (return (string->number num)))
+  (ret (string->number num)))
 
 (define (read-json header port)
   (run (json) port))

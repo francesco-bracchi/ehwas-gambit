@@ -95,7 +95,7 @@
 		 xml-pi 
 		 xml-comment
 		 xml-entity))
-  (return (car stack)))
+  (ret (car stack)))
 
 ;; WRITE PROCEDURES
 

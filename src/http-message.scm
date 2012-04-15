@@ -86,19 +86,18 @@
 (http-writer-set! "text/plain" write-text)
 
 (define digit->number
-  (let(
-       (d0 (char->integer #\0)))
+  (let((d0 (char->integer #\0)))
     (lambda (v)
       (- (char->integer v) d0))))
 
 (define-parser (http-version-parser)
-  (<> (>> (regexp "HTTP/")
-	  (<- mj (digit))
-	  (char #\.)
-	  (<- mn (digit))
-	  (return (cons (digit->number mj)
-			(digit->number mn))))
-      (return '(1 . 0))))
+  (alt (cat (regexp "HTTP/")
+	    (<- mj (digit))
+	    #\.
+	    (<- mn (digit))
+	    (ret (cons (digit->number mj)
+			  (digit->number mn))))
+       (ret '(1 . 0))))
 
 
 ;;; http-request.scm
@@ -138,9 +137,9 @@
   (space)
   (<- version (http-version-parser))
   (space)
-  (get #\newline)
+  #\newline
   (<- header (rfc822))
-  (return
+  (ret
    (let*((header (parse-header-fields header))
          (method (string->symbol method))
 	 (body (read header port)))
@@ -231,10 +230,9 @@
   (<- code (regexp "[0-9][0-9][0-9]"))
   (sp)
   (<- status (regexp "[~\n]*"))
-  (get #\newline)
+  #\newline
   (<- header (rfc822))
-  (return (let(
-	       (code (string->number code))
+  (ret (let((code (string->number code))
 	       (status (string->symbol status))
 	       (header (parse-header-fields header))
 	       (body (read header port))) 

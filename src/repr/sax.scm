@@ -21,13 +21,13 @@
 
 (define-parser (xml-name)
   (<- r (xml-name-string))
-  (return (string->symbol r)))
+  (ret (string->symbol r)))
 
 (define-parser (xml-entity state handler)
-  (get #\&)
+  #\&
   (<- name (xml-name))
-  (get #\;)
-  (return (handler state name #f)))
+  #\;
+  (ret (handler state name #f)))
 
 (define-regexp xml-char-entity-decimal "[0-9]+")
 
@@ -36,14 +36,14 @@
 (define-parser (xml-char-entity state handler)
   #\& #\#
   (<- code 
-      (<> (>> (<- s (xml-char-entity-decimal))
-	      #\;
-	      (return (string->number s)))
-	  (>> (get #\x)
-	      (<- s (xml-char-entity-hex))
-	      #\;
-	      (return (string->number s 16)))))
-  (return 
+      (alt (cat (<- s (xml-char-entity-decimal))
+		#\;
+		(ret (string->number s)))
+	   (cat #\x
+		(<- s (xml-char-entity-hex))
+		#\;
+		(ret (string->number s 16)))))
+  (ret 
    (handler 
     state 
     '*ENTITY*
@@ -84,7 +84,7 @@
   (cdata-open)
   (<- text (cdata-text))
   (cdata-close)
-  (return (handler state '*CDATA* text)))
+  (ret (handler state '*CDATA* text)))
 
 (define-regexp xml-comment-text "([~\\-]|\\-[~\\-])*")
 
@@ -92,7 +92,7 @@
   #\< #\! #\- #\-
   (<- text (xml-comment-text))
   #\- #\- #\>
-  (return (handler state '*COMMENT* text)))
+  (ret (handler state '*COMMENT* text)))
 
 (define-regexp xml-pi-text "([~\\?]|\\?[~>])*")
 (define-parser (xml-pi state handler)
@@ -101,13 +101,13 @@
   (xml-space)
   (<- text (xml-pi-text))
   #\? #\>
-  (return (handler state name text)))
+  (ret (handler state name text)))
 
 ;; (define-parser (xml-attribute-value)
 ;;   #\"
 ;;   (<- text (xml-attribute-text))
 ;;   #\"
-;;   (return text))
+;;   (ret text))
 
 (define-parser (xml-attribute-value)
   (reflect (ts sc fl)
@@ -139,45 +139,45 @@
   #\=
   (maybe-xml-space)
   (<- val (xml-attribute-value))
-  (return (cons name val)))
+  (ret (cons name val)))
 
 (define-parser (xml-attributes)
-  (kleene (>> (xml-space) (xml-attribute))))
+  (many (cat (xml-space) (xml-attribute))))
 
 (define-parser (xml-open state open close)
   #\<
   (<- name (xml-name))
   (<- as (xml-attributes))
   (maybe-xml-space)
-  (<> (>> #\/ #\>
-	  (return (close (open state name as) name '())))
-      (>> #\>
-	  (return (open state name as)))))
+  (alt (cat #\/ #\>
+	    (ret (close (open state name as) name '())))
+       (cat #\>
+	    (ret (open state name as)))))
 
 (define-parser (xml-close state handler)
   #\< #\/
   (<- name (xml-name))
   (maybe-xml-space)
   #\>
-  (return (handler state name '())))
+  (ret (handler state name '())))
 
 (define-parser (sax-element state on-open on-close on-text on-pi on-comment on-entity)
-  (<> (xml-open state on-open on-close)
-      (xml-close state on-close)
-      (xml-text state on-text)
-      (xml-comment state on-comment)
-      (xml-pi state on-pi)
-      (xml-cdata state on-text)
-      (xml-char-entity state on-text)
-      (xml-entity state on-entity)))
+  (alt (xml-open state on-open on-close)
+       (xml-close state on-close)
+       (xml-text state on-text)
+       (xml-comment state on-comment)
+       (xml-pi state on-pi)
+       (xml-cdata state on-text)
+       (xml-char-entity state on-text)
+       (xml-entity state on-entity)))
 
 (define-parser (sax state on-open on-close on-text on-pi on-comment on-entity)
-  (<> (>> (<- state (sax-element state 
-				 on-open 
-				 on-close 
-				 on-text 
-				 on-pi 
-				 on-comment 
-				 on-entity))
-	  (sax state on-open on-close on-text on-pi on-comment on-entity))
-      (return state)))
+  (alt (cat (<- state (sax-element state 
+				   on-open 
+				   on-close 
+				   on-text 
+				   on-pi 
+				   on-comment 
+				   on-entity))
+	    (sax state on-open on-close on-text on-pi on-comment on-entity))
+       (ret state)))

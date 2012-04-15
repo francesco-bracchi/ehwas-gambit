@@ -72,8 +72,8 @@
 	 (li (a (@ (href . ,(link () (resume -1)))) "decrement (-1)")))
 	(form
 	 (@ (action . ,(link (val) (resume (string->number val)))))
-	 (input (@ (type . "text") (name . "val") (value . "0")))))))
+	 (label "Add: " (input (@ (type . "text") (name . "val") (value . "0"))))))))
 
 (http-service-register! (with-resume sum) port-number: 6080)
-
 (thread-sleep! +inf.0)
+

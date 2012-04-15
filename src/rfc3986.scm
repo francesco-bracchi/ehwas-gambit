@@ -29,10 +29,9 @@
 
 (define-parser (uri-port)
   (<- c (re-port))
-  (let(
-       (p (string->number c)))
+  (let ((p (string->number c)))
     (if (and (> p 0) (< p 65536))
-	(return p)
+	(ret p)
         (fail "port number too high"))))
 
 (define-regexp scheme "[a-zA-Z][a-zA-Z0-9\\+\\-\\.]*")
@@ -41,8 +40,8 @@
 (define-regexp re-userinfo  "([a-zA-Z0-9!$&',;=:\\-\\.\\_\\~\\(\\)\\*\\+]|%[0-9a-fA-F]{2})*")
 
 (define-parser (userinfo)
-  (>> (<- c (re-userinfo))
-      (return (pct-decode c))))
+  (cat (<- c (re-userinfo))
+       (ret (pct-decode c))))
 
 (define (string-split str ch)
   (let for ((l0 0) (l1 0) (acc '()))
@@ -57,33 +56,33 @@
 (define-regexp octet "((2[0-5][0-9]|1[0-9][0-9]|[0-9][0-9]|[0-9])\\.){3}(2[0-5][0-9]|1[0-9][0-9]|[0-9][0-9]|[0-9])")
 
 (define-parser (ipv4)
-  (>> (<- v (octet))
-      (return `(ip4 ,@(map string->number (string-split v #\.))))))
+  (cat (<- v (octet))
+       (ret `(ip4 ,@(map string->number (string-split v #\.))))))
 
 (define-regexp re-hostname  "([a-zA-Z0-9!$&',;=\\-\\.\\_\\~\\(\\)\\*\\+]|%[0-9a-fA-F]{2})*")
 
 (define-parser (hostname)
-  (>> (<- name (re-hostname))
-      (return (pct-decode name))))
+  (cat (<- name (re-hostname))
+       (ret (pct-decode name))))
 
 (define-parser (host)
-  (<> (ipv4)
-      (hostname)))
+  (alt (ipv4)
+       (hostname)))
 
 (define-parser (authority)
-  (>> (<- ui (<> (>> (<- u (userinfo))
-		     (char #\@)
-		     (return u))
-		 (return #f)))
-      (<- h (host))
-      (<- p (<> (>> (get #\:) 
-		    (<- p (uri-port))
-		    (return p))
-		(return #f)))
-      (return (append
-               (if ui `((userinfo ,@ui)) '())
-               `((host ,@h))
-               (if p `((port ,@p)) '())))))
+  (cat (<- ui (alt (cat (<- u (userinfo))
+			(char #\@)
+			(ret u))
+		   (ret #f)))
+       (<- h (host))
+       (<- p (alt (cat #\:
+		       (<- p (uri-port))
+		       (ret p))
+		  (ret #f)))
+       (ret (append
+	     (if ui `((userinfo ,@ui)) '())
+	     `((host ,@h))
+	     (if p `((port ,@p)) '())))))
 
 (define (string->segment str)
   (or (string->number str)
@@ -92,104 +91,104 @@
 (define-regexp re-segment "([a-zA-Z0-9\\-\\.\\_\\~!$&'\\(\\)\\*\\+,;=]|%[0-9a-fA-F]{2})*")
 
 (define-parser (segment)
-  (>> (<- r (re-segment))
-      (return (string->segment (pct-decode r)))))
+  (cat (<- r (re-segment))
+       (ret (string->segment (pct-decode r)))))
 
 ;; (define-regexp re-segment-nz "([a-zA-Z0-9]|\\-|\\.|_|\\~|%[0-9a-fA-F]{2}|!|$|&|'|\\(|\\)|\\*|\\+|,|;|=)+")
 
 (define-regexp re-segment-nz "([a-zA-Z0-9\\-\\.\\_\\~!$&'\\(\\)\\*\\+,;=]|%[0-9a-fA-F]{2})+")
 
 (define-parser (segment-nz)
-  (>> (<- r (re-segment-nz))
-      (return (string->segment (pct-decode r)))))
-  
+  (cat (<- r (re-segment-nz))
+       (ret (string->segment (pct-decode r)))))
+
 (define-regexp re-segment-nz-nc "([a-zA-Z0-9\\-\\.\\_\\~!$&'\\(\\)\\*\\+,;=:]|%[0-9a-fA-F]{2})+")
 
 (define-parser (segment-nz-nc)
-  (>> (<- r (re-segment-nz-nc))
-      (return (string->segment (pct-decode r)))))
+  (cat (<- r (re-segment-nz-nc))
+       (ret (string->segment (pct-decode r)))))
 
 (define-parser (path-abempty)
-  (<> (>> #\/
-          (<- s (segment))
-          (<- ss (path-abempty))
-          (return (cons s ss)))
-      (return '())))
+  (alt (cat #\/
+	    (<- s (segment))
+	    (<- ss (path-abempty))
+	    (ret (cons s ss)))
+       (ret '())))
 
 (define-parser (path-absolute)
   #\/
-  (<> (>> (<- s (segment-nz))
-          (<- ss (path-abempty))
-          (return (cons s ss)))
-      (return '())))
+  (alt (cat (<- s (segment-nz))
+	    (<- ss (path-abempty))
+	    (ret (cons s ss)))
+       (ret '())))
 
 (define-parser (path-noscheme)
-  (>> (<- s (segment-nz-nc))
-      (<- ss (path-abempty))
-      (return (cons s ss))))
+  (cat (<- s (segment-nz-nc))
+       (<- ss (path-abempty))
+       (ret (cons s ss))))
 
 (define-parser (path-rootless)
-  (>> (<- s (segment-nz))
-      (<- ss (path-abempty))
-      (return (cons s ss))))
+  (cat (<- s (segment-nz))
+       (<- ss (path-abempty))
+       (ret (cons s ss))))
 
 (define-parser (path-empty)
-  (return '()))
+  (ret '()))
 
 (define-parser (path)
-  (<> (path-abempty)
-      (path-absolute)
-      (path-noscheme)
-      (path-rootless)
-      (return '())))
+  (alt (path-abempty)
+       (path-absolute)
+       (path-noscheme)
+       (path-rootless)
+       (ret '())))
 
 (define-regexp re-query "[a-zA-Z0-9\\-\\.\\_\\~!$&\\'\\(\\)\\*\\+\\,\\;=%@\\/\\?]*")
 
 (define-parser (query)
-  (<> (>> (char #\?) (re-query))
-      (return #f)))
+  (alt (cat (char #\?) (re-query))
+       (ret #f)))
 
 (define-regexp re-fragment "([a-zA-Z0-9\\-\\.\\_\\~!$&\\'\\(\\)\\*\\+,;=\\/\\?]|%[0-9a-fA-F]{2})*")
 
 (define-parser (fragment)
-  (<> (>> #\#
-	  (<- cs (re-fragment))
-	  (return (pct-decode cs)))
-      (return #f)))
+  (alt (cat #\#
+	    (<- cs (re-fragment))
+	    (ret (pct-decode cs)))
+       (ret #f)))
 
 (define-parser (absolute)
-  (>> (<- s (scheme))
-      (char #\:)
-      (<> (>> #\/ #\/
-              (<- a  (authority))
-              (<- pa (path-abempty))
-              (<- q  (query))
-              (<- f  (fragment))
-              (return (make-uri s a pa q f)))
-          (>> (<- pa (<> (path-absolute)
-                         (path-rootless)
-                         (path-empty)))
-              (<- q (query))
-              (<- f (fragment))
-              (return (make-uri s '() pa q f))))))
+  (cat (<- s (scheme))
+       (char #\:)
+       (alt (cat #\/ #\/
+		 (<- a  (authority))
+		 (<- pa (path-abempty))
+		 (<- q  (query))
+		 (<- f  (fragment))
+		 (ret (make-uri s a pa q f)))
+	    (cat (<- pa (alt (path-absolute)
+			     (path-rootless)
+			     (path-empty)))
+		 (<- q (query))
+		 (<- f (fragment))
+		 (ret (make-uri s '() pa q f))))))
 
 (define-parser (relative)
-  (<> (>> #\/ #\/
-          (<- a  (authority))
-          (<- pa (path-abempty))
-          (<- q  (query))
-          (<- f  (fragment))
-          (return (make-uri '() a pa q f)))
-      (>> (<- pa (<> (path-absolute)
-                     (path-noscheme)
-                     (path-empty)))
-          (<- q (query))
-          (<- f (fragment))
-          (return (make-uri '() '() pa q f)))))
+  (alt (cat #\/ #\/
+	    (<- a  (authority))
+	    (<- pa (path-abempty))
+	    (<- q  (query))
+	    (<- f  (fragment))
+	    (ret (make-uri '() a pa q f)))
+       (cat (<- pa (alt (path-absolute)
+			(path-noscheme)
+			(path-empty)))
+	    (<- q (query))
+	    (<- f (fragment))
+	    (ret (make-uri '() '() pa q f)))))
 
 (define-parser (rfc3986)
-  (<> (absolute)
-      (relative)))
+  (alt (absolute)
+       (relative)))
 
 (define (pct->u8vector s)
   (call-with-output-u8vector
@@ -251,7 +250,7 @@
 		     (display "%" out)
 		     (display (number->string ch 16) out)))
 	       (for (+ j 1)))))))))
-		   
+
 
 
 (define (scheme->string s)
@@ -297,7 +296,7 @@
 
 (define (read-uri #!optional (port (current-input-port)))
   (run (rfc3986) port))
-			   
+
 (define (write-uri uri #!optional (port (current-output-port)))
   (print port: port
 	 (list

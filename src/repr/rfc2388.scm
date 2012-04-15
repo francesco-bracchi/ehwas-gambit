@@ -25,15 +25,14 @@
 (define-parser (field)
   (<- name (regexp "[~= \n]*"))
   (spaces) 
-  (maybe (get #\=))
+  (maybe #\=)
   (spaces)
-  (maybe (get #\"))
+  (maybe #\")
   (<- value (regexp "[~;\n\"]*"))
-  (maybe (get #\"))
-  (return (cons (string->symbol name) value)))
+  (maybe  #\")
+  (ret (cons (string->symbol name) value)))
 
 (include "~~ansuz/sources/port#.scm")
-
 
 (define (stream-starts? stream boundary)
   (let starts? ((stream stream)
@@ -108,17 +107,16 @@
 
 (define-parser (rfc2388-field boundary)
   (<- header* (rfc822))
-  (let*(
-	(header (parse-header-fields header*))
-	(content-disposition_ (assq 'content-disposition header))
-	(content-disposition (cadr content-disposition_))
-	(content-type_ (assq 'content-type header))
-	(content-type (and content-type_ (cdr content-type_)))
-	(name (assh 'name content-disposition))
-	(filename (assh 'filename content-disposition)))
+  (let* ((header (parse-header-fields header*))
+	 (content-disposition_ (assq 'content-disposition header))
+	 (content-disposition (cadr content-disposition_))
+	 (content-type_ (assq 'content-type header))
+	 (content-type (and content-type_ (cdr content-type_)))
+	 (name (assh 'name content-disposition))
+	 (filename (assh 'filename content-disposition)))
     (if (or (not name) (= (string-length name) 0)) (fail "name not specified")
-	(>> (<- value (rfc2388-value boundary))
-	    (return (cons (string->symbol name)
+	(cat (<- value (rfc2388-value boundary))
+	    (ret (cons (string->symbol name)
 			  (if filename
 			      (list (call-with-input-u8vector 
 				     value
@@ -129,12 +127,12 @@
 			      (u8vector->string value))))))))
 
 (define-parser (rfc2388)
-  (word "--")
+  #\- #\-
   (<- boundary (regexp "[~\n]+"))
-  (get #\newline)
+  #\newline
   (<- first (rfc2388-field boundary))
-  (<- rest (kleene (>> (get #\newline) (rfc2388-field boundary))))
-  (return (cons first rest)))
+  (<- rest (many (cat #\newline (rfc2388-field boundary))))
+  (ret (cons first rest)))
 
 (define (read-rfc2388 header port)
   (run (rfc2388) port))
