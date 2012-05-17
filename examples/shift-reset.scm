@@ -71,6 +71,17 @@
 (define (call/reset th)
   (call/cc
     (lambda (k)
+
+
+	 ;; (with-exception-handler
+	 ;;  (lambda (ex)
+	 ;;    (continuation-capture
+	 ;;     (lambda (cont)
+	 ;;       (display-exception-in-context ex cont (current-output-port))
+	 ;;       (display-continuation-backtrace cont (current-output-port) #t #t 10 4))))
+	 ;;  (lambda () (object->u8vector k)))
+	    
+
        (set! pstack (cons k pstack))
        (go th))))			; does not return
 

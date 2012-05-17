@@ -1,5 +1,6 @@
 (include "~~ehwas/ehwas#.scm")
 (include "shift-reset#.scm")
+(load "src/http-server")
 
 (define current-resume-table (make-parameter (make-table init: #f)))
 
@@ -10,10 +11,8 @@
 
 (define (with-resume handler #!optional (table (current-resume-table)))
   (lambda (request)
-    (parameterize
-     ((current-resume-table table))
-     (or (resume-link table request)
-	 (reset (handler request))))))
+    (or (resume-link table request)
+	(reset (handler request) (thread-terminate! (current-thread))))))
 
 (define (list->link list)
   (if (null? list) ""
@@ -45,16 +44,22 @@
       (error "link syntax error")))))
 
 (define (sum request)
-  (let sum ((v0 0))
-    (let((v (get-value v0)))
-      (if v (sum (+ v0 v))))))
+  (let sum ((v0 0) (vs '()))
+    (let((v (get-value v0 vs)))
+      (if v (sum (+ v0 v) (append vs (list v)))))))
 
-(define (get-value v0)
-  (shift resume (http-response 
+(define (get-value v0 vs)
+  (shift resume 
+	 (http-response 
 		 body: (page-template 
 			title: (string-append "Sum " (number->string v0))
-			body: (form-template resume)
+			body: (template (div ,(form-template resume) ,(table vs)))
 			footer: (template (p "total is " ,v0))))))
+
+(define (table vs)
+  (template
+   (table ,(map (lambda (v) (template (tr (td "+") (td (@ (style "text-align:right;width:250px")) ,v)))) vs)
+	  (tr (@ (style "background:#ff0")) (td "total:") (td ,(apply + vs))))))
 
 (define (page-template #!key title body footer)
   (template
@@ -67,13 +72,10 @@
 (define (form-template resume)
   (template
    (div (@ (class . "template"))
-	(ul 
-	 (li (a (@ (href . ,(link () (resume 1)))) "increment (+1)"))
-	 (li (a (@ (href . ,(link () (resume -1)))) "decrement (-1)")))
-	(form
-	 (@ (action . ,(link (val) (resume (string->number val)))))
-	 (label "Add: " (input (@ (type . "text") (name . "val") (value . "0"))))))))
+	(form (@ (action . ,(link (val) (resume (string->number val)))))
+	      (label "Add: " (input (@ (type . "text") (name . "val") (value . "0")))))
+	(ul (li (a (@ (href . ,(link () (resume 1)))) "increment (+1)"))
+	    (li (a (@ (href . ,(link () (resume -1)))) "decrement (-1)"))))))
 
 (http-service-register! (with-resume sum) port-number: 6080)
 (thread-sleep! +inf.0)
-
