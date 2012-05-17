@@ -38,12 +38,10 @@
 	(string->list str))))
 
 (define (memoize1 func #!key (test eq?))
-  (let(
-       (*fail* (list 'fail))
+  (let((*fail* (list 'fail))
        (*memo* (make-table test: test weak-keys: #t init: #f)))
     (lambda (key)
-      (let(
-	   (val (table-ref *memo* key *fail*)))
+      (let((val (table-ref *memo* key *fail*)))
 	(if (eq? val *fail*)
 	    (let((val (func key)))
 	      (table-set! *memo* key val)

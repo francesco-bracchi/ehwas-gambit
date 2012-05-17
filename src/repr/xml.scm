@@ -81,12 +81,9 @@
       (pop stack)
       (let find ((pstack stack))
 	(cond
-	 ((null? pstack) 
-	  stack)	 
-	 ((eq? (caar pstack) name)
-	  (pop pstack))
-	 (else
-	  (find (pop pstack)))))))
+	 ((null? pstack) stack)	 
+	 ((eq? (caar pstack) name) (pop pstack))
+	 (else (find (pop pstack)))))))
 
 (define-parser (sxml)
   (<- stack (sax '((top))

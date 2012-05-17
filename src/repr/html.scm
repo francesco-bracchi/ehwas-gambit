@@ -179,7 +179,7 @@
    ((procedure? html) (html port))
    ((not html) 'OK)
    (else (write-html-expr html port (current-cdata-elements)))))
-      
+
 (define (html->string html)
   (call-with-output-string "" (lambda (port) (write-html html port))))
 

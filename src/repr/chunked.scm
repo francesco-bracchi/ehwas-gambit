@@ -16,19 +16,17 @@
     (chunked-read reader header port)))
 
 (define (chunked-read reader header port)
-  (let(
-       (buffer (make-u8vector (chunk-size))))
-    (receive (client server) (open-u8vector-pipe)     
-	     (thread-start!
-	      (make-thread
-	       (lambda () 
-		 (let consume ()
-		   (let*(
-			 (len (string->number (read-line port) 16))
-			 (data (make-u8vector len)))
-		     (read-subu8vector data 0 len port)
-		     (write-subu8vector data 0 len client))))))
-	     (reader header server))))
+  (receive (client server) (open-u8vector-pipe)
+	   (let read ()
+	     (let*((len (string->number (read-line port) 16))
+		   (data (and len (make-u8vector len))))
+	       (if (and len (> len 0))
+		   (begin (read-subu8vector data 0 len port)
+			  (write-subu8vector data 0 len client)
+			  (force-output client)
+			  (read))
+		   (close-port client))))
+	   (thread-join! (thread-start! (make-thread (lambda () (reader header server)))))))
 
 (define (chunked-write what writer header port)
   (let((buffer (make-u8vector (chunk-size))))
@@ -44,20 +42,21 @@
 		       (write-subu8vector buffer 0 len port)
 		       (produce))))))))
 
-(current-http-reader 
- (let*(
-       (normal-reader (current-http-reader))
-       (chunked-reader (with-chunked-reader normal-reader)))
-   (lambda (header port)
-     (if (equal? (assh 'content-encoding header) "chunked")
-	 (chunked-reader header port)
-	 (normal-reader header port)))))
+(define (make-chunked-reader normal-reader)
+  (let ((chunked-reader (with-chunked-reader normal-reader)))
+    (lambda (header port)
+      (if (equal? (assh 'transfer-encoding header) '("chunked"))
+	  (chunked-reader header port)
+	  (normal-reader header port)))))
 
-(current-http-writer
- (let*((normal-writer (current-http-writer))
-       (chunked-writer (with-chunked-writer normal-writer)))
-   (lambda (what header port)
-     (if (equal? (assh 'content-encoding header) "chunked")
-	 (chunked-writer what header port)
-	 (normal-writer what header port)))))
+  
+(define (make-chunked-writer normal-writer)
+  (let ((chunked-writer (with-chunked-writer normal-writer)))
+    (lambda (what header port)
+      (if (equal? (assh 'transfer-encoding header) '("chunked"))
+	  (chunked-writer what header port)
+	  (normal-writer what header port)))))
+
+(current-http-reader (make-chunked-reader (current-http-reader)))
+(current-http-writer (make-chunked-writer (current-http-writer)))
 

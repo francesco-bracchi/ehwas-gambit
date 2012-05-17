@@ -49,7 +49,7 @@
   port)
 
 (define (default-http-reader header port)
-  ((table-ref *body-reader* (get-content-type header) get-port) header port)))
+  ((table-ref *body-reader* (get-content-type header) get-port) header port))
 
 (define (default-http-writer body header port)
   (cond
@@ -285,4 +285,3 @@
    ((= code 404) "Not Found")
    ((= code 500) "Internal Server Error")
    (else 200)))
-

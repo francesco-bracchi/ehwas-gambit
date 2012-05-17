@@ -64,11 +64,12 @@
 
 (define (http-service handler)
   (lambda () 
+    (input-port-timeout-set! (current-input-port) (max-idle-time))
     (call/cc
      (lambda (exit)
        (let handle-more ()
 	 (with-exception-handler
-	  (lambda (ex) 
+	  (lambda (ex)
 	    (continuation-capture
 	     (lambda (cont)
 	       (display-exception-in-context ex cont (current-output-port))
@@ -79,19 +80,15 @@
 	      (if (http-request? request)
 		  (let ((response (handler request)))
 		    (if (http-response? response)
-			(let*(
-			      (request-header (http-message-header request))
+			(let*((request-header (http-message-header request))
 			      (response-header (http-message-header response))
 			      (request-connection  (assh 'connection request-header))
 			      (response-connection (assh 'connection response-header))
-			      (chunked? (and (equal? (http-message-version request) '(1 . 1))
-					     (equal? (assh 'transfer-encoding response-header) "chunked")))
 			      (keep-alive? (and (equal? (http-message-version request) '(1 . 1))
 						request-connection 
 						(equal? (car request-connection)  "Keep-Alive")
 						(not (and response-connection 
-							  (equal? (car response-connection) "Close")))))
-			      (content-length? (assh 'content-length response-header)))
+							  (equal? (car response-connection) "Close"))))))
 			  (write-http-response response)
 			  (force-output)
 			  (if keep-alive? (handle-more)))
@@ -112,7 +109,6 @@
 	 (backlog 128) 
 	 (reuse-address #t))
 
-  (input-port-timeout-set! (current-input-port) (max-idle-time))
   (tcp-service-register!
    (list server-address: server-address
          port-number: port-number

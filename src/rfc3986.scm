@@ -36,7 +36,6 @@
 
 (define-regexp scheme "[a-zA-Z][a-zA-Z0-9\\+\\-\\.]*")
 
-
 (define-regexp re-userinfo  "([a-zA-Z0-9!$&',;=:\\-\\.\\_\\~\\(\\)\\*\\+]|%[0-9a-fA-F]{2})*")
 
 (define-parser (userinfo)
@@ -157,20 +156,20 @@
        (ret #f)))
 
 (define-parser (absolute)
-  (cat (<- s (scheme))
-       (char #\:)
-       (alt (cat #\/ #\/
-		 (<- a  (authority))
-		 (<- pa (path-abempty))
-		 (<- q  (query))
-		 (<- f  (fragment))
-		 (ret (make-uri s a pa q f)))
-	    (cat (<- pa (alt (path-absolute)
-			     (path-rootless)
-			     (path-empty)))
-		 (<- q (query))
-		 (<- f (fragment))
-		 (ret (make-uri s '() pa q f))))))
+  (<- s (scheme))
+  #\:
+  (alt (cat #\/ #\/
+	    (<- a  (authority))
+	    (<- pa (path-abempty))
+	    (<- q  (query))
+	    (<- f  (fragment))
+	    (ret (make-uri s a pa q f)))
+       (cat (<- pa (alt (path-absolute)
+			(path-rootless)
+			(path-empty)))
+	    (<- q (query))
+	    (<- f (fragment))
+	    (ret (make-uri s '() pa q f)))))
 
 (define-parser (relative)
   (alt (cat #\/ #\/
@@ -251,16 +250,14 @@
 		     (display (number->string ch 16) out)))
 	       (for (+ j 1)))))))))
 
-
-
 (define (scheme->string s)
   (if (null? s) ""
-      (string-append (pct-encode s) ":")))
+      (string-append (pct-encode s) ":/")))
 
 (define (authority->string a)
   (if (null? a) ""
       (string-append
-       "//"
+       "/"
        (userinfo->string (assoc 'userinfo a))
        (host->string (assoc 'host a))
        (port->string (assoc 'port a)))))
