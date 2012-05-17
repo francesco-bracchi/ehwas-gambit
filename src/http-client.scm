@@ -2,7 +2,7 @@
 
 (##include "~~/lib/gambit#.scm")
 
-(include "~~ansuz/on-strings#.scm")
+(include "~~ansuz/on-ports#.scm")
 
 (include "rfc3986#.scm")
 (include "utils#.scm")
@@ -12,22 +12,21 @@
 
 (define (string->uri str)
   (call-with-input-string 
-   str
-   (lambda (p) (run (rfc3986) p))))
+   str (lambda (p) 
+	 (run (rfc3986) p))))
 
 (define (make-http-client-request
 	 uri
-	 #!key
-	 (method 'GET)
-	 (http-version '(1 . 1))
-	 (header '())
-	 (body '()))
+	 method
+	 http-version 
+	 header
+	 body)
   (make-http-request
-   method
-   uri
    http-version
-   `((host . ,(assh 'host (uri-authority uri))) ,@header)
-   body))
+   header 
+   body
+   method
+   uri))
 
 (define *default-ports*
   (list->table 
@@ -40,8 +39,7 @@
   (table-ref *default-ports* 80))
 
 (define (with-tcp-client descr handler)
-  (let(
-       (port (open-tcp-client descr)))
+  (let((port (open-tcp-client descr)))
     (dynamic-wind
 	(lambda () 'none)
 	(lambda () (handler port))
@@ -54,35 +52,26 @@
 		(body "")
 		(write (current-http-writer))
 		(read (current-http-reader)))
-  (let*(
-	(uri (if (uri? uri) uri (string->uri uri)))
-	(body
-	 (call-with-output-u8vector
-	  (u8vector)
-	  (lambda (port)
-	    (write-http-request body port write))))
+  (let*((uri (if (uri? uri) uri (string->uri uri)))
 	(auth (uri-authority uri))
 	(host (assh 'host auth))
 	(port (or (assh 'port auth)
 		  (get-default-port (uri-scheme uri))))
-	(header
-	 `((host . ,host)
-	   (content-length . ,(u8vector-length body))
-	   ,@header))
+	(header `((host . ,host) ,@header))
 	(request
-	 (http-request
-	  method: method
-	  uri: uri
-	  version: http-version
-	  header: header
-	  body: body)))
-    
+	 (make-http-client-request
+	  (make-uri '() '() (uri-path uri) (uri-query uri) #f)
+	  method
+	  http-version
+	  header
+	  body)))
     (with-tcp-client 
      (list server-address: host
 	   port-number: port
 	   eol-encoding: 'cr-lf
-	   char-encoding: 'ascii)
+	   buffering: #f
+	   )
      (lambda (port) 
        (write-http-request request port)
-       (force-output) 
-       (read-http-response port) port read))))
+       (force-output port) 
+       (read-http-response port read)))))
