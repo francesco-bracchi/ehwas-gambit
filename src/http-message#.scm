@@ -2,14 +2,15 @@
  ("ehwas-http-message#"
   
   current-http-reader
+  default-http-reader
+
   current-http-writer
+  default-http-writer
 
   http-reader
   http-writer
   http-reader-set!
   http-writer-set!
-  current-http-encoder
-  current-http-decoder
 
   current-http-version
 

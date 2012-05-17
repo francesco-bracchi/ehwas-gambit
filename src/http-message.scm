@@ -24,15 +24,14 @@
   (body read-only: unprintable:))
 
 (define (get-content-type header)
-  (let(
-       (type (assh 'content-type header)))
+  (let((type (assh 'content-type header)))
     (cond
      ((and (pair? type) (pair? (car type))) (caar type))
      ((pair? type) (car type))
      (else type))))
 
 (define (read-text #!optional 
-		   (header '()) 
+		   (header '())
 		   (port (current-input-port)))
   (read-line port #f))
 
@@ -49,24 +48,25 @@
 (define (get-port header port)
   port)
 
+(define (default-http-reader header port)
+  ((table-ref *body-reader* (get-content-type header) get-port) header port)))
+
+(define (default-http-writer body header port)
+  (cond
+   ((table-ref *body-writer* (get-content-type header) #f) =>
+    (lambda (writer) (writer body header port)))
+   ((not body) 'OK)
+   ((procedure? body) (body port))
+   ((u8vector? body) (write-subu8vector body 0 (u8vector-length) port))
+   ((string? body) (display body port))
+   (else (error "Unkonwn type" body))))
+
 (define current-http-reader 
 ;; todo handle chunked data
-  (make-parameter 
-   (lambda (header port)
-     ((table-ref *body-reader* (get-content-type header) get-port) header port))))
-      
-  
+  (make-parameter default-http-reader))
+
 (define current-http-writer 
-  (make-parameter 
-   (lambda (body header port)
-     (cond
-      ((table-ref *body-writer* (get-content-type header) #f) =>
-       (lambda (writer) (writer body header port)))
-      ((not body) 'OK)
-      ((procedure? body) (body port))
-      ((u8vector? body) (write-subu8vector body 0 (u8vector-length) port))
-      ((string? body) (display body port))
-      (else (error "Unkonwn type" body))))))
+  (make-parameter default-http-writer))
 
 (define (http-reader-set! type fun)
   (table-set! *body-reader* type fun))
@@ -96,9 +96,8 @@
 	    #\.
 	    (<- mn (digit))
 	    (ret (cons (digit->number mj)
-			  (digit->number mn))))
+		       (digit->number mn))))
        (ret '(1 . 0))))
-
 
 ;;; http-request.scm
 (##namespace ("ehwas-request#"))
@@ -232,16 +231,16 @@
   (<- status (regexp "[~\n]*"))
   #\newline
   (<- header (rfc822))
-  (ret (let((code (string->number code))
-	       (status (string->symbol status))
-	       (header (parse-header-fields header))
-	       (body (read header port))) 
-	    (make-http-response
-	     version
-	     header
-	     body
-	     code 
-	     status))))
+  (ret (let* ((code (string->number code))
+	      (status (string->symbol status))
+	      (header (parse-header-fields header))
+	      (body (read header port)))
+	 (make-http-response
+	  version
+	  header
+	  body
+	  code 
+	  status))))
 
 (define (read-http-response #!optional 
 			    (port (current-input-port))
@@ -256,7 +255,7 @@
        (status (http-response-status response))
        (header (http-message-header response))
        (body (http-message-body response)))
-    ;; (forr-each (lambda (e) (display e port))
+    ;; (for-each (lambda (e) (display e port))
     ;;            (list "HTTP/" (car version) "." (cdr version) " " code " " status))
     (print port: port (list "HTTP/" (car version) "." (cdr version) " " code " " status))
     (newline port)
@@ -286,5 +285,4 @@
    ((= code 404) "Not Found")
    ((= code 500) "Internal Server Error")
    (else 200)))
-
 
