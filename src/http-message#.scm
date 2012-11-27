@@ -27,7 +27,14 @@
   ))
 
 (define-macro (define-writer head . tail)
-  `(reader-set! ,(car head) (lambda ,(cdr head) ,@tail)))
+  `(http-writer-set! ,(car head) (lambda ,(cdr head) ,@tail)))
 
 (define-macro (define-reader head . tail)
-  `(reader-set! ,(car head) (lambda ,(cdr head) ,@tail)))
+  `(http-reader-set! ,(car head) (lambda ,(cdr head) ,@tail)))
+
+(define-type http-message
+  extender: define-http-message
+  id: 209121D0-95EA-4061-8C83-5665BBEDAAA3
+  (version read-only:)
+  (header read-only: unprintable:)
+  (body read-only: unprintable:))
