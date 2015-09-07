@@ -1,0 +1,6 @@
+src/*.o
+src/*.c
+src/ehwas#.scm
+src/repr/*.o
+src/repr/*.c
+lib
