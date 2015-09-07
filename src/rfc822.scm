@@ -1,6 +1,6 @@
 (##namespace ("rfc822#"))
  
-(##include "~~/lib/gambit#.scm")
+(##include "~~lib/gambit#.scm")
 
 (include "~~ansuz/sources/port#.scm")
 (include "~~ansuz/char-stream-parser#.scm")

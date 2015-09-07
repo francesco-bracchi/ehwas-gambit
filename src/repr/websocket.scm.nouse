@@ -1,11 +1,11 @@
 (##namespace ("ehwas-websocket#"))
 
-(##include "~~/lib/gambit#.scm")
+(##include "~~lib/gambit#.scm")
 (include "../http-request#.scm")
 (include "../http-response#.scm")
-(include "~~/lib/digest#.scm")
+(include "~~lib/digest#.scm")
 
-(##include "~~/lib/gambit#.scm")
+(##include "~~lib/gambit#.scm")
 
 (declare
  (standard-bindings)

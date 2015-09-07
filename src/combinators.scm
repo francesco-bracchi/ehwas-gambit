@@ -1,6 +1,6 @@
 (##namespace ("ehwas-combinators#"))
 
-(##include "~~/lib/gambit#.scm")
+(##include "~~lib/gambit#.scm")
 
 (include "http-message#.scm")
 (include "http-response#.scm")
@@ -191,3 +191,9 @@
     (if (null? fs) f
 	(let((g (car fs)))
 	  (compose (lambda (x) (f (g x))) (cdr fs))))))
+
+(define (with-error exception-handler handler)
+  (lambda (request)
+    (with-exception-handler
+     (lambda (exception) (exception-handler request exception))
+     (lambda () (handler request)))))

@@ -1,5 +1,5 @@
 (##namespace("ehwas-mime-types#"))
-(##include "~~/lib/gambit#.scm")
+(##include "~~lib/gambit#.scm")
 
 (declare (standard-bindings)
          (extended-bindings)

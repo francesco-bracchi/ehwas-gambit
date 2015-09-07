@@ -12,7 +12,7 @@ SRCDIR		= 	src
 LIBDIR		= 	lib
 EXAMPLEDIR	=	examples
 
-INSTALLDIR	= 	$(shell ${GSI} -e "(display (path-expand \"~~/${LIBNAME}\"))")
+INSTALLDIR	= 	$(shell ${GSI} -e "(display (path-expand \"~~${LIBNAME}\"))")
 SOURCES		=	$(shell ls ${SRCDIR}/*[a-zA-Z0-9].scm) $(shell ls ${SRCDIR}/repr/*[a-zA-Z0-9].scm)
 CFILES		= 	$(SOURCES:.scm=.c)
 OBJECT_FILES	=	$(SOURCES:.scm=.o)

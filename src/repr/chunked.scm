@@ -1,7 +1,7 @@
 ;;; TODO: test! test! test! never tested!
 (##namespace ("ehwas-chunked#"))
 
-(##include "~~/lib/gambit#.scm")
+(##include "~~lib/gambit#.scm")
 (include "../utils#.scm")
 (include "../http-message#.scm")
 

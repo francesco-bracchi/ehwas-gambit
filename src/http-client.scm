@@ -1,6 +1,6 @@
 (##namespace ("ehwas-http-client#"))
 
-(##include "~~/lib/gambit#.scm")
+(##include "~~lib/gambit#.scm")
 
 (include "~~ansuz/on-ports#.scm")
 

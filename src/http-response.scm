@@ -1,6 +1,6 @@
 ;;; http-response.scm
 (##namespace ("ehwas-response#"))
-(##include "~~/lib/gambit#.scm")
+(##include "~~lib/gambit#.scm")
 
 (include "~~ansuz/sources/port#.scm")
 (include "~~ansuz/char-stream-parser#.scm")

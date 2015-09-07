@@ -1,6 +1,6 @@
 (namespace ("ehwas-rfc2388#"))
 
-(##include "~~/lib/gambit#.scm")
+(##include "~~lib/gambit#.scm")
 (include "~~ansuz/char-stream-parser#.scm")
 (include "~~ansuz/re#.scm")
 (include "~~ansuz/sources/string#.scm")

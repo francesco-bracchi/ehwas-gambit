@@ -1,6 +1,6 @@
 (##namespace  ("ehwas-cookies#"))
 
-(##include "~~/lib/gambit#.scm")
+(##include "~~lib/gambit#.scm")
 
 (include "utils#.scm")
 (include "http-message#.scm")

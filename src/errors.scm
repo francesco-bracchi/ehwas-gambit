@@ -1,6 +1,6 @@
 (##namespace ("ehwas-errors#"))
 
-(##include "~~/lib/gambit#.scm")
+(##include "~~lib/gambit#.scm")
 
 (include "http-message#.scm")
 (include "http-response#.scm")
@@ -8,7 +8,7 @@
 (include "repr/template#.scm")
 (include "errors#.scm")
 
-(##include "~~/lib/gambit#.scm")
+(##include "~~lib/gambit#.scm")
 
 (declare (standard-bindings)
          (extended-bindings)

@@ -1,6 +1,6 @@
 (##namespace  ("ehwas-utils#"))
 
-(##include "~~/lib/gambit#.scm")
+(##include "~~lib/gambit#.scm")
 
 (include "~~ansuz/on-strings#.scm")
 (include "~~ansuz/re#.scm")

@@ -2,7 +2,7 @@
 
 (##namespace ("ehwas-sax#"))
 
-(##include "~~/lib/gambit#.scm")
+(##include "~~lib/gambit#.scm")
 (include "~~ansuz/on-ports#.scm")
 (include "~~ansuz/re#.scm")
 

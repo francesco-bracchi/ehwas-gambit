@@ -1,6 +1,6 @@
 (##namespace ("ehwas-compress#"))
 
-(##include "~~/lib/gambit#.scm")
+(##include "~~lib/gambit#.scm")
 
 (include "request#.scm")
 (include "response#.scm")
