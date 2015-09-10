@@ -102,35 +102,21 @@
 (define (default-handler code data)
   ((table-ref *default-errors* code) code data))
 
-;; (define (with-error-handler handler res)
-;;   (lambda (req)
-;;     (or (with-exception-catcher
-;;          (lambda (e)
-;;            (continuation-capture
-;;             (lambda (k)
-;;               (handler req 500 exception: e continuation: k))))
-;;          (lambda () (res req)))
-;;         (handler req 404))))
-
-(define (with-error-handler error-handler request-handler)
+(define (with-error-handler request-handler
+                            #!optional
+                            (error-handler default-handler))
   (lambda (req)
-    (let(
-	 (eh (current-exception-handler)))
-      (or (with-exception-catcher
-	   (lambda (e)
-	     (continuation-capture
-	      (lambda (kont)
-		(with-exception-catcher 
-		 (lambda (ex) (pp (unbound-global-exception-variable ex)) 'ignore)
-		 (lambda ()
-		   (default-handler
-                     500
-                     (string-append
-                      (exception->string e kont)
-                      "\n"
-                      (backtrace->string kont))))))))
-	   (lambda () (request-handler req)))
-	  (error-handler 404 "")))))
-
-(define (with-default-error-handler handler)
-  (with-error-handler default-handler handler))
+    (or (with-exception-catcher
+         (lambda (e)
+           (continuation-capture
+            (lambda (kont)
+              (with-exception-catcher 
+               (lambda (ex) 'ignore)
+               (lambda () (error-handler
+                      500
+                      (string-append
+                       (exception->string e kont)
+                       "\n"
+                       (backtrace->string kont))))))))
+         (lambda () (request-handler req)))
+        (error-handler 404 ""))))
