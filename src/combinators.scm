@@ -100,8 +100,7 @@
 
 (define (with-index file handler)
   (lambda (request)
-    (let(
-         (reverse-path (reverse (uri-path (http-request-uri request)))))
+    (let((reverse-path (reverse (uri-path (http-request-uri request)))))
       (if (and (pair? reverse-path)
 	       (eq? (car reverse-path) '||))
 	  (handler
